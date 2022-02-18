@@ -27,3 +27,4 @@ Papers:
 2021 - Efficient RGB-D Semantic Segmentation for Indoor Scene Analysis - Seichter et al: https://ieeexplore.ieee.org/abstract/document/9561675
 
 ---- RGB-D AND RGB SEMANTIC SEGMENTATION FOR RANSAC ----
+2020 - SuperGlue: Learning Feature Matching with Graph Neural Networks - Sarlin et al: https://ieeexplore.ieee.org/document/9157489
