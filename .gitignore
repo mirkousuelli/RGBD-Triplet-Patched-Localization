@@ -1,12 +1,12 @@
 *
-
-# track this file
 !.gitignore
-
-# whitelist
 !Code/
+!Code/*
 !Dataset/
+!Dataset/*
 !Documents/
+!Documents/*
 !Papers/
+!Papers/*
 !CMakeLists.txt
 !README.md
