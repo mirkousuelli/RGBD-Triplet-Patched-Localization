@@ -4,7 +4,7 @@
 # not this file
 !.gitignore
 
-# not this folders
+# not these folders
 !Code/
 !Dataset/
 !Documents/
