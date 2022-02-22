@@ -1,0 +1,13 @@
+*
+!*/
+
+# track this file
+!.gitignore
+
+# whitelist
+!Code/
+!Dataset/
+!Documents/
+!Papers/
+!CMakeLists.txt
+!README.md
