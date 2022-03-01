@@ -62,9 +62,9 @@ Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) 
 	solve(A, b, x)
 
 	/* The reconstruction assumes null skew factor, thus:
-	 * iac =[ a 0 b ]
-	 *		[ 0 1 c ]
-	 *		[ b c d ]
+	 * iac	=	[ a 0 b ]
+	 *			[ 0 1 c ]
+	 *			[ b c d ]
 	 * Remembering that a = 1 / aspect_ratio.
 	 */
 	return Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, 
