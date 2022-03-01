@@ -1,12 +1,21 @@
+# ignore everything
 *
+
+# not this file
 !.gitignore
+
+# not these folders
 !Code/
-!Code/*
 !Dataset/
-!Dataset/*
 !Documents/
-!Documents/*
 !Papers/
+
+# not their files
+!Code/*
+!Dataset/*
+!Documents/*
 !Papers/*
+
+# not these files
 !CMakeLists.txt
 !README.md
