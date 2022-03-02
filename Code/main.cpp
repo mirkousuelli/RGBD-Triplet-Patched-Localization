@@ -6,7 +6,7 @@ int main(int argc, char** argv )
 {
 
     Mat image;
-    image = imread("Dataset/00000-color.png");
+    image = imread("../Dataset/00000-color.png");
     if ( !image.data )
     {
         printf("No image data \n");
