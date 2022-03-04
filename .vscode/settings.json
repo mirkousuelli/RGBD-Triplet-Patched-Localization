@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.c": "bat",
+        "array": "cpp",
+        "string_view": "cpp"
+    }
+}
