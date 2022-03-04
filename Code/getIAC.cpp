@@ -6,7 +6,7 @@ using namespace cv;
 #define K_MATRIX_DIM 3
 #define SYSTEM_VARS 4
 
-Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) {
+Mat getCalibrationMatrix(Point3_<double> vp_vert, Point3_<double> vp_ort_1, Point3_<double> vp_ort_2, Mat H) {
 	/**
 	 * Gets the image of the absolute conic from a rectified face, two
 	 * horizontal vanishing points related to the rectified face, a vanishing
@@ -20,8 +20,8 @@ Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) 
 	invert(H, invH);
 
 	// get the first and second column of invH
-	Mat h1 = Mat(1, K_MATRIX_DIM, CV_64F, invH.col(0));
-	Mat h2 = Mat(1, K_MATRIX_DIM, CV_64F, invH.col(1));
+	Point3_<double> h1(invH.col(0));
+	Point3_<double> h2(invH.col(1));
 
 	/* Now we set a linear system as: A * x = b
 	 * Where A gets the vanishing points coefficients according to the absolute conic constraints
@@ -29,29 +29,28 @@ Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) 
 	 */
 
 	// left-hand matrix (coefficients)
-	Mat A = Mat(SYSTEM_VARS, SYSTEM_VARS, CV_64F, 
-		{	
+	double a[] = {	
 			// Equation 1 : a*v(1)*v1(1) + b*v(1)*v1(3) + v(2)*v1(2) + c*v(2)*v1(3) + b*v(3)*v1(1) + c*v(3)*v1(2) + d*v(3)*v1(3);
-			vp_vert.at<double>(0,0) * vp_ort_1.at<double>(0,0), vp_vert.at<double>(0,0) * vp_ort_1.at<double>(2,0) + vp_vert.at<double>(2,0) * vp_ort_1.at<double>(0,0), vp_vert.at<double>(1,0) * vp_ort_1.at<double>(2,0) + vp_vert.at<double>(2,0) * vp_ort_1.at<double>(1,0), vp_vert.at<double>(2,0) * vp_ort_1.at<double>(2,0),
+			vp_vert.x * vp_ort_1.x, vp_vert.x * vp_ort_1.z + vp_vert.z * vp_ort_1.x, vp_vert.y * vp_ort_1.z + vp_vert.z * vp_ort_1.y, vp_vert.z * vp_ort_1.z,
 
 			// Equation 2 : a*v(1)*v1(1) + b*v(1)*v1(3) + v(2)*v1(2) + c*v(2)*v1(3) + b*v(3)*v1(1) + c*v(3)*v1(2) + d*v(3)*v1(3);
-			vp_vert.at<double>(0,0) * vp_ort_2.at<double>(0,0), vp_vert.at<double>(0,0) * vp_ort_2.at<double>(2,0) + vp_vert.at<double>(2,0) * vp_ort_2.at<double>(0,0), vp_vert.at<double>(1,0) * vp_ort_2.at<double>(2,0) + vp_vert.at<double>(2,0) * vp_ort_2.at<double>(1,0), vp_vert.at<double>(2,0) * vp_ort_2.at<double>(2,0),
+			vp_vert.x * vp_ort_2.x, vp_vert.x * vp_ort_2.z + vp_vert.z * vp_ort_2.x, vp_vert.y * vp_ort_2.z + vp_vert.z * vp_ort_2.y, vp_vert.z * vp_ort_2.z,
 
 			// Equation 3 : a*h2(1)*h1(1) + b*h2(1)*h1(3) + h2(2)*h1(2) + c*h2(2)*h1(3) + b*h2(3)*h1(1) + c*h2(3)*h1(2) + d*h2(3)*h1(3);
-			h2.at<double>(0,0) * h1.at<double>(0,0), (h2.at<double>(0,0) * h1.at<double>(2,0) + h2.at<double>(2,0) * h1.at<double>(0,0)), (h2.at<double>(1,0) * h1.at<double>(2,0) + h2.at<double>(2,0) * h1.at<double>(1,0)), h2.at<double>(2,0) * h1.at<double>(2,0),
+			h2.x * h1.x, (h2.x * h1.z + h2.z * h1.x), (h2.y * h1.z + h2.z * h1.y), h2.z * h1.z,
 
 			// Equation 4 : a*h1(1)*h1(1) + b*h1(1)*h1(3) + h1(2)*h1(2) + c*h1(2)*h1(3) + b*h1(3)*h1(1) + c*h1(3)*h1(2) + d*h1(3)*h1(3) - (a*h2(1)*h2(1) + b*h2(1)*h2(3) + h2(2)*h2(2) + c*h2(2)*h2(3) + b*h2(3)*h2(1) + c*h2(3)*h2(2) + d*h2(3)*h2(3));
-			h1.at<double>(0,0) * h1.at<double>(0,0) - h2.at<double>(0,0) * h2.at<double>(0,0), 2 * (h1.at<double>(0,0) * h1.at<double>(2,0) - h2.at<double>(0,0) * h2.at<double>(2,0)), 2 * (h1.at<double>(1,0) * h1.at<double>(2,0) - h2.at<double>(1,0) * h2.at<double>(2,0)), h1.at<double>(2,0) * h1.at<double>(2,0) - h2.at<double>(2,0) * h2.at<double>(2,0) 
-		}
-	);
+			h1.x * h1.x - h2.x * h2.x, 2 * (h1.x * h1.z - h2.x * h2.z), 2 * (h1.y * h1.z - h2.y * h2.z), h1.z * h1.z - h2.z * h2.z 
+	};
+	Mat A = Mat(SYSTEM_VARS, SYSTEM_VARS, CV_64F, a);
 
 	// right-hand vector
 	Mat b = Mat(SYSTEM_VARS, 1, CV_64F, 
 		{	
-			- vp_vert.at<double>(1,0) * vp_ort_1.at<double>(1,0), 
-			- vp_vert.at<double>(1,0) * vp_ort_2.at<double>(1,0),
-			- h2.at<double>(1,0) * h1.at<double>(1,0),
-			- h1.at<double>(1,0) * h1.at<double>(1,0) + h2.at<double>(1,0) * h2.at<double>(1,0) 
+			- vp_vert.y * vp_ort_1.y, 
+			- vp_vert.y * vp_ort_2.y,
+			- h2.y * h1.y,
+			- h1.y * h1.y + h2.y * h2.y 
 		}
 	);
 
@@ -59,7 +58,7 @@ Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) 
 	Mat x(SYSTEM_VARS, 1, CV_64F);
 
 	// solve the linear system as : x = inv(A) * b
-	solve(A, b, x)
+	solve(A, b, x);
 
 	/* The reconstruction assumes null skew factor, thus:
 	 * iac	=	[ a 0 b ]
@@ -67,11 +66,63 @@ Mat getIAC(InputArray vp_vert, InputArray vp_ort_1, InputArray vp_ort_2, Mat H) 
 	 *			[ b c d ]
 	 * Remembering that a = 1 / aspect_ratio.
 	 */
-	return Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, 
-		{ 	
-			x.at<double>(0,0), 0, x.at<double>(1,0),
-			0, 1, x.at<double>(2,0),
-			x.at<double>(1,0), x.at<double>(2,0), x.at<double>(3,0) 
-		}
-	);
+	double iac[] = { 	
+		x.at<double>(0,0), 0, x.at<double>(1,0),
+		0, 1, x.at<double>(2,0),
+		x.at<double>(1,0), x.at<double>(2,0), x.at<double>(3,0) 
+	};
+
+	double alfa = sqrt(iac[0]);
+	double u0 = -iac[2] / pow(alfa, 2);
+	double v0 = -iac[5];
+	double fy = sqrt(iac[8] - pow(alfa, 2) * pow(u0, 2) - pow(v0, 2));
+	double fx = fy / alfa;
+	double k[] = {
+		fx, 0, u0,
+		0, fy, v0,
+		0, 0, 1
+	};
+	Mat K = Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, k);
+
+	std::cout << "K = " << std::endl << " " << K << std::endl << std::endl;
+
+	return Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, k);
+}
+
+int main() {
+	/**
+	 * Vertical vanishing points:
+	 * 1) 1.0e+03 * 0.4939  -1.8320   0.0010
+	 * 
+	 * Horizontal vanishing points:
+	 * 1) 1.0e+04 * 1.5043   0.1081   0.0001
+	 * 2) 1.0e+03 * 0.4231   1.1908   0.0010
+	 */
+
+	std::vector<Point3_<double>> pts = {
+		Point3_<double>(493.9, -1832.0, 1.0),
+		Point3_<double>(15043.0, 1081.0, 1.0),
+		Point3_<double>(423.1, 1190.8, 1.0)
+	};
+
+	// affine transformation matrix
+	double h_aff[] = {1, 0, -0.0001, 0, 1, -0.0008, 0, 0, 1};
+	Mat H_aff = Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, h_aff);
+
+	// euclidean transformation matrix
+	double h_met[] = {1.2398, -0.3136, 0, -0.3136, 1.4399, 0, 0, 0, 1};
+	Mat H_met = Mat(K_MATRIX_DIM, K_MATRIX_DIM, CV_64F, h_met);
+
+	Mat homography = H_met * H_aff;
+
+	std::cout << "vanishing points = " << std::endl << " " << pts << std::endl << std::endl;
+	std::cout << "affine = " << std::endl << " " << H_aff << std::endl << std::endl;
+	std::cout << "euclidean = " << std::endl << " " << H_met << std::endl << std::endl;
+	std::cout << "homography = " << std::endl << " " << homography << std::endl << std::endl;
+
+	Mat K = getCalibrationMatrix(pts[0], pts[1], pts[2], homography);
+
+	//std::cout << "K = " << std::endl << " " << K << std::endl << std::endl;
+
+	return 0;
 }

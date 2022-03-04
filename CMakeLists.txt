@@ -8,8 +8,10 @@ find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_executable(main Code/main.cpp)
+add_executable(getIAC Code/getIAC.cpp)
 
 target_link_libraries( main ${OpenCV_LIBS} )
+target_link_libraries( getIAC ${OpenCV_LIBS} )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
