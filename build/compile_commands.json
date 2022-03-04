@@ -8,5 +8,10 @@
   "directory": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build",
   "command": "/usr/local/bin/x86_64-apple-darwin20-g++-11  -isystem /usr/local/Cellar/opencv/4.5.4_4/include/opencv4 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.5 -o CMakeFiles/getIAC.dir/Code/getIAC.cpp.o -c \"/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/getIAC.cpp\"",
   "file": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/getIAC.cpp"
+},
+{
+  "directory": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build",
+  "command": "/usr/local/bin/x86_64-apple-darwin20-g++-11  -isystem /usr/local/Cellar/opencv/4.5.4_4/include/opencv4 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.5 -o CMakeFiles/corners.dir/Code/corners.cpp.o -c \"/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/corners.cpp\"",
+  "file": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/corners.cpp"
 }
 ]
