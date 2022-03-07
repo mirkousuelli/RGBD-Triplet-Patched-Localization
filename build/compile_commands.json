@@ -13,5 +13,15 @@
   "directory": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build",
   "command": "/usr/local/bin/x86_64-apple-darwin20-g++-11  -isystem /usr/local/Cellar/opencv/4.5.4_4/include/opencv4 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.5 -o CMakeFiles/corners.dir/Code/corners.cpp.o -c \"/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/corners.cpp\"",
   "file": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/corners.cpp"
+},
+{
+  "directory": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build",
+  "command": "/usr/local/bin/x86_64-apple-darwin20-g++-11  -isystem /usr/local/Cellar/opencv/4.5.4_4/include/opencv4 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.5 -o CMakeFiles/rectify.dir/Code/rectify.cpp.o -c \"/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/rectify.cpp\"",
+  "file": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/rectify.cpp"
+},
+{
+  "directory": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build",
+  "command": "/usr/local/bin/x86_64-apple-darwin20-g++-11  -isystem /usr/local/Cellar/opencv/4.5.4_4/include/opencv4 -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX12.1.sdk -mmacosx-version-min=11.5 -o CMakeFiles/calibration.dir/Code/calibration.cpp.o -c \"/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/calibration.cpp\"",
+  "file": "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/calibration.cpp"
 }
 ]

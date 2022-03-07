@@ -91,4 +91,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/main.dir/DependInfo.cmake"
   "CMakeFiles/getIAC.dir/DependInfo.cmake"
   "CMakeFiles/corners.dir/DependInfo.cmake"
+  "CMakeFiles/rectify.dir/DependInfo.cmake"
+  "CMakeFiles/calibration.dir/DependInfo.cmake"
   )

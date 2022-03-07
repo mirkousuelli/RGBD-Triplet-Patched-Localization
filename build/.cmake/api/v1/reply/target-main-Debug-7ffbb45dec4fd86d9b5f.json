@@ -2,7 +2,7 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "getIAC"
+			"path" : "main"
 		}
 	],
 	"backtrace" : 1,
@@ -26,13 +26,13 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 11,
+				"line" : 10,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 15,
+				"line" : 16,
 				"parent" : 0
 			},
 			{
@@ -67,7 +67,7 @@
 			]
 		}
 	],
-	"id" : "getIAC::@6890427a1f51a3e7e1df",
+	"id" : "main::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
@@ -367,8 +367,8 @@
 		],
 		"language" : "CXX"
 	},
-	"name" : "getIAC",
-	"nameOnDisk" : "getIAC",
+	"name" : "main",
+	"nameOnDisk" : "main",
 	"paths" : 
 	{
 		"build" : ".",
@@ -389,7 +389,7 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "Code/getIAC.cpp",
+			"path" : "Code/main.cpp",
 			"sourceGroupIndex" : 0
 		}
 	],

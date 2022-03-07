@@ -66,6 +66,8 @@ CMAKE_BINARY_DIR = "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/
 all: CMakeFiles/main.dir/all
 all: CMakeFiles/getIAC.dir/all
 all: CMakeFiles/corners.dir/all
+all: CMakeFiles/rectify.dir/all
+all: CMakeFiles/calibration.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -104,6 +106,8 @@ clean: CMakeFiles/ContinuousSubmit.dir/clean
 clean: CMakeFiles/main.dir/clean
 clean: CMakeFiles/getIAC.dir/clean
 clean: CMakeFiles/corners.dir/clean
+clean: CMakeFiles/rectify.dir/clean
+clean: CMakeFiles/calibration.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -841,7 +845,7 @@ CMakeFiles/ContinuousSubmit.dir/clean:
 CMakeFiles/main.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=5,6 "Built target main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=7,8 "Built target main"
 .PHONY : CMakeFiles/main.dir/all
 
 # Build rule for subdir invocation for target.
@@ -867,7 +871,7 @@ CMakeFiles/main.dir/clean:
 CMakeFiles/getIAC.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=3,4 "Built target getIAC"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=5,6 "Built target getIAC"
 .PHONY : CMakeFiles/getIAC.dir/all
 
 # Build rule for subdir invocation for target.
@@ -893,7 +897,7 @@ CMakeFiles/getIAC.dir/clean:
 CMakeFiles/corners.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/corners.dir/build.make CMakeFiles/corners.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/corners.dir/build.make CMakeFiles/corners.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=1,2 "Built target corners"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=3,4 "Built target corners"
 .PHONY : CMakeFiles/corners.dir/all
 
 # Build rule for subdir invocation for target.
@@ -911,6 +915,58 @@ corners: CMakeFiles/corners.dir/rule
 CMakeFiles/corners.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/corners.dir/build.make CMakeFiles/corners.dir/clean
 .PHONY : CMakeFiles/corners.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/rectify.dir
+
+# All Build rule for target.
+CMakeFiles/rectify.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=9,10 "Built target rectify"
+.PHONY : CMakeFiles/rectify.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/rectify.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/rectify.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" 0
+.PHONY : CMakeFiles/rectify.dir/rule
+
+# Convenience name for target.
+rectify: CMakeFiles/rectify.dir/rule
+.PHONY : rectify
+
+# clean rule for target.
+CMakeFiles/rectify.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/clean
+.PHONY : CMakeFiles/rectify.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/calibration.dir
+
+# All Build rule for target.
+CMakeFiles/calibration.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir="/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" --progress-num=1,2 "Built target calibration"
+.PHONY : CMakeFiles/calibration.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/calibration.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/calibration.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/build/CMakeFiles" 0
+.PHONY : CMakeFiles/calibration.dir/rule
+
+# Convenience name for target.
+calibration: CMakeFiles/calibration.dir/rule
+.PHONY : calibration
+
+# clean rule for target.
+CMakeFiles/calibration.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/clean
+.PHONY : CMakeFiles/calibration.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

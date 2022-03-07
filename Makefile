@@ -549,6 +549,56 @@ corners/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/corners.dir/build.make CMakeFiles/corners.dir/build
 .PHONY : corners/fast
 
+#=============================================================================
+# Target rules for targets named rectify
+
+# Build rule for target.
+rectify: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rectify
+.PHONY : rectify
+
+# fast build rule for target.
+rectify/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/build
+.PHONY : rectify/fast
+
+#=============================================================================
+# Target rules for targets named calibration
+
+# Build rule for target.
+calibration: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 calibration
+.PHONY : calibration
+
+# fast build rule for target.
+calibration/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/build
+.PHONY : calibration/fast
+
+Code/calibration.o: Code/calibration.cpp.o
+.PHONY : Code/calibration.o
+
+# target to build an object file
+Code/calibration.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/Code/calibration.cpp.o
+.PHONY : Code/calibration.cpp.o
+
+Code/calibration.i: Code/calibration.cpp.i
+.PHONY : Code/calibration.i
+
+# target to preprocess a source file
+Code/calibration.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/Code/calibration.cpp.i
+.PHONY : Code/calibration.cpp.i
+
+Code/calibration.s: Code/calibration.cpp.s
+.PHONY : Code/calibration.s
+
+# target to generate assembly for a file
+Code/calibration.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/Code/calibration.cpp.s
+.PHONY : Code/calibration.cpp.s
+
 Code/corners.o: Code/corners.cpp.o
 .PHONY : Code/corners.o
 
@@ -621,6 +671,30 @@ Code/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/Code/main.cpp.s
 .PHONY : Code/main.cpp.s
 
+Code/rectify.o: Code/rectify.cpp.o
+.PHONY : Code/rectify.o
+
+# target to build an object file
+Code/rectify.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.o
+.PHONY : Code/rectify.cpp.o
+
+Code/rectify.i: Code/rectify.cpp.i
+.PHONY : Code/rectify.i
+
+# target to preprocess a source file
+Code/rectify.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.i
+.PHONY : Code/rectify.cpp.i
+
+Code/rectify.s: Code/rectify.cpp.s
+.PHONY : Code/rectify.s
+
+# target to generate assembly for a file
+Code/rectify.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.s
+.PHONY : Code/rectify.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -660,9 +734,14 @@ help:
 	@echo "... NightlySubmit"
 	@echo "... NightlyTest"
 	@echo "... NightlyUpdate"
+	@echo "... calibration"
 	@echo "... corners"
 	@echo "... getIAC"
 	@echo "... main"
+	@echo "... rectify"
+	@echo "... Code/calibration.o"
+	@echo "... Code/calibration.i"
+	@echo "... Code/calibration.s"
 	@echo "... Code/corners.o"
 	@echo "... Code/corners.i"
 	@echo "... Code/corners.s"
@@ -672,6 +751,9 @@ help:
 	@echo "... Code/main.o"
 	@echo "... Code/main.i"
 	@echo "... Code/main.s"
+	@echo "... Code/rectify.o"
+	@echo "... Code/rectify.i"
+	@echo "... Code/rectify.s"
 .PHONY : help
 
 
