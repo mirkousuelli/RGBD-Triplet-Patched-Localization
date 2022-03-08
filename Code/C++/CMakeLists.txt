@@ -4,6 +4,7 @@ project(main VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
+# export PATH=/usr/local/opt/qt5/bin:$PATH
 find_package( OpenCV REQUIRED )
 find_package( PCL 1.3 REQUIRED COMPONENT common io VISUALIZATION )
 
