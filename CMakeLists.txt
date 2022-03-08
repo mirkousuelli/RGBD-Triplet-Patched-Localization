@@ -5,7 +5,7 @@ include(CTest)
 enable_testing()
 
 find_package( OpenCV REQUIRED )
-find_package(PCL 1.3 REQUIRED COMPONENT common io VISUALIZATION)
+find_package( PCL 1.3 REQUIRED COMPONENT common io VISUALIZATION )
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 include_directories( ${PCL_INCLUDE_DIRS} )
