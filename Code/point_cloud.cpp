@@ -28,37 +28,29 @@ int main() {
     Mat rgb_image = imread("Dataset/00000-color.png");
     Mat d_image = imread("Dataset/00000-depth.png");
 
-    namedWindow("RGB Image", WINDOW_AUTOSIZE );
+    /*namedWindow("RGB Image", WINDOW_AUTOSIZE );
     imshow("RGB Image", rgb_image);
     namedWindow("Depth Image", WINDOW_AUTOSIZE );
-    imshow("Depth Image", d_image);
+    imshow("Depth Image", d_image);*/
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>); 
 
     // my camera parameters
-    float cx = 67.0f; //optical center x coordinate
-    float cy = 1028.7f; //optical center y coordinate
-    float f = 512.5f; //focal length (the same for x and y)
-
-    // default parameters
-    //float cx = 319.5f; //optical center x coordinate
-    //float cy = 239.5f; //optical center y coordinate
-    //float f = 525.0f; //focal length (the same for x and y)
+    float cx = 330.2f; //optical center x coordinate
+    float cy = 254.4f; //optical center y coordinate
+    float fx = 522.3f; //focal length x
+    float fy = 523.4f; //focal length x
 
     pcl::PointXYZRGB point;
-
-    cout << rgb_image.cols << endl;
-    cout << rgb_image.rows << endl;
-    int prod = rgb_image.cols * rgb_image.rows;
 
     int imageDepth;
     cv::Vec3b pixel;
     int i = 0;
-    for (int imageWidth = 0; imageWidth < rgb_image.cols - 100; imageWidth++) {
-        for (int imageHeight = 0; imageHeight < rgb_image.rows - 200; imageHeight++) {
+    for (int imageWidth = 0; imageWidth < rgb_image.cols; imageWidth++) {
+        for (int imageHeight = 0; imageHeight < rgb_image.rows; imageHeight++) {
             imageDepth = d_image.at<int>(imageWidth, imageHeight);
-            point.x = (cx - imageWidth) / f;
-            point.y = (cy - imageHeight) / f;
+            point.x = (imageWidth - cx) / fx;
+            point.y = (imageHeight - cy) / fy;
             point.z = imageDepth / sqrt(1 + pow(point.x, 2)+ pow(point.y, 2));
             point.x *= point.z;
             point.y *= point.z;
@@ -66,8 +58,7 @@ int main() {
             point.r = pixel[2];
             point.g = pixel[1];
             point.b = pixel[0];
-            cloud->points.push_back(point);
-            cout << ++i << " / " << prod << endl ;
+            cloud->push_back(point);
         }
     }
 
