@@ -524,19 +524,6 @@ main/fast:
 .PHONY : main/fast
 
 #=============================================================================
-# Target rules for targets named getIAC
-
-# Build rule for target.
-getIAC: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 getIAC
-.PHONY : getIAC
-
-# fast build rule for target.
-getIAC/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/build
-.PHONY : getIAC/fast
-
-#=============================================================================
 # Target rules for targets named corners
 
 # Build rule for target.
@@ -550,19 +537,6 @@ corners/fast:
 .PHONY : corners/fast
 
 #=============================================================================
-# Target rules for targets named rectify
-
-# Build rule for target.
-rectify: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 rectify
-.PHONY : rectify
-
-# fast build rule for target.
-rectify/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/build
-.PHONY : rectify/fast
-
-#=============================================================================
 # Target rules for targets named calibration
 
 # Build rule for target.
@@ -574,6 +548,19 @@ calibration: cmake_check_build_system
 calibration/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/calibration.dir/build.make CMakeFiles/calibration.dir/build
 .PHONY : calibration/fast
+
+#=============================================================================
+# Target rules for targets named point_cloud
+
+# Build rule for target.
+point_cloud: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 point_cloud
+.PHONY : point_cloud
+
+# fast build rule for target.
+point_cloud/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/point_cloud.dir/build.make CMakeFiles/point_cloud.dir/build
+.PHONY : point_cloud/fast
 
 Code/calibration.o: Code/calibration.cpp.o
 .PHONY : Code/calibration.o
@@ -623,30 +610,6 @@ Code/corners.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/corners.dir/build.make CMakeFiles/corners.dir/Code/corners.cpp.s
 .PHONY : Code/corners.cpp.s
 
-Code/getIAC.o: Code/getIAC.cpp.o
-.PHONY : Code/getIAC.o
-
-# target to build an object file
-Code/getIAC.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/Code/getIAC.cpp.o
-.PHONY : Code/getIAC.cpp.o
-
-Code/getIAC.i: Code/getIAC.cpp.i
-.PHONY : Code/getIAC.i
-
-# target to preprocess a source file
-Code/getIAC.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/Code/getIAC.cpp.i
-.PHONY : Code/getIAC.cpp.i
-
-Code/getIAC.s: Code/getIAC.cpp.s
-.PHONY : Code/getIAC.s
-
-# target to generate assembly for a file
-Code/getIAC.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/getIAC.dir/build.make CMakeFiles/getIAC.dir/Code/getIAC.cpp.s
-.PHONY : Code/getIAC.cpp.s
-
 Code/main.o: Code/main.cpp.o
 .PHONY : Code/main.o
 
@@ -671,29 +634,29 @@ Code/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/main.dir/build.make CMakeFiles/main.dir/Code/main.cpp.s
 .PHONY : Code/main.cpp.s
 
-Code/rectify.o: Code/rectify.cpp.o
-.PHONY : Code/rectify.o
+Code/point_cloud.o: Code/point_cloud.cpp.o
+.PHONY : Code/point_cloud.o
 
 # target to build an object file
-Code/rectify.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.o
-.PHONY : Code/rectify.cpp.o
+Code/point_cloud.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/point_cloud.dir/build.make CMakeFiles/point_cloud.dir/Code/point_cloud.cpp.o
+.PHONY : Code/point_cloud.cpp.o
 
-Code/rectify.i: Code/rectify.cpp.i
-.PHONY : Code/rectify.i
+Code/point_cloud.i: Code/point_cloud.cpp.i
+.PHONY : Code/point_cloud.i
 
 # target to preprocess a source file
-Code/rectify.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.i
-.PHONY : Code/rectify.cpp.i
+Code/point_cloud.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/point_cloud.dir/build.make CMakeFiles/point_cloud.dir/Code/point_cloud.cpp.i
+.PHONY : Code/point_cloud.cpp.i
 
-Code/rectify.s: Code/rectify.cpp.s
-.PHONY : Code/rectify.s
+Code/point_cloud.s: Code/point_cloud.cpp.s
+.PHONY : Code/point_cloud.s
 
 # target to generate assembly for a file
-Code/rectify.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/rectify.dir/build.make CMakeFiles/rectify.dir/Code/rectify.cpp.s
-.PHONY : Code/rectify.cpp.s
+Code/point_cloud.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/point_cloud.dir/build.make CMakeFiles/point_cloud.dir/Code/point_cloud.cpp.s
+.PHONY : Code/point_cloud.cpp.s
 
 # Help Target
 help:
@@ -736,24 +699,20 @@ help:
 	@echo "... NightlyUpdate"
 	@echo "... calibration"
 	@echo "... corners"
-	@echo "... getIAC"
 	@echo "... main"
-	@echo "... rectify"
+	@echo "... point_cloud"
 	@echo "... Code/calibration.o"
 	@echo "... Code/calibration.i"
 	@echo "... Code/calibration.s"
 	@echo "... Code/corners.o"
 	@echo "... Code/corners.i"
 	@echo "... Code/corners.s"
-	@echo "... Code/getIAC.o"
-	@echo "... Code/getIAC.i"
-	@echo "... Code/getIAC.s"
 	@echo "... Code/main.o"
 	@echo "... Code/main.i"
 	@echo "... Code/main.s"
-	@echo "... Code/rectify.o"
-	@echo "... Code/rectify.i"
-	@echo "... Code/rectify.s"
+	@echo "... Code/point_cloud.o"
+	@echo "... Code/point_cloud.i"
+	@echo "... Code/point_cloud.s"
 .PHONY : help
 
 

@@ -36,7 +36,7 @@ set(CPACK_IGNORE_FILES "/CVS/;/\\.svn/;/\\.bzr/;/\\.hg/;/\\.git/;\\.swp\$;\\.#;/
 set(CPACK_INSTALLED_DIRECTORIES "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling;/")
 set(CPACK_INSTALL_CMAKE_PROJECTS "")
 set(CPACK_INSTALL_PREFIX "/usr/local")
-set(CPACK_MODULE_PATH "")
+set(CPACK_MODULE_PATH "/usr/local/share/pcl-1.12/Modules")
 set(CPACK_NSIS_DISPLAY_NAME "main 0.1.0")
 set(CPACK_NSIS_INSTALLER_ICON_CODE "")
 set(CPACK_NSIS_INSTALLER_MUI_ICON_CODE "")

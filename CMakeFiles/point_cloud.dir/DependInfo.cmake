@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/rectify.cpp" "CMakeFiles/rectify.dir/Code/rectify.cpp.o" "gcc" "CMakeFiles/rectify.dir/Code/rectify.cpp.o.d"
+  "/Users/mirkousuelli/OneDrive - Politecnico di Milano/GitHub/rgb-d-semantic-sampling/Code/point_cloud.cpp" "CMakeFiles/point_cloud.dir/Code/point_cloud.cpp.o" "gcc" "CMakeFiles/point_cloud.dir/Code/point_cloud.cpp.o.d"
   )
 
 # Targets to which this target links.
