@@ -25,15 +25,10 @@ pcl::visualization::PCLVisualizer::Ptr simpleVis (pcl::PointCloud<pcl::PointXYZR
 }
 
 int main() {
-    Mat rgb_image = imread("Dataset/00000-color.png");
-    Mat d_image = imread("Dataset/00000-depth.png");
+	Mat rgb_image = imread("Dataset/00000-color.png");
+	Mat d_image = imread("Dataset/00000-depth.png");
 
-    /*namedWindow("RGB Image", WINDOW_AUTOSIZE );
-    imshow("RGB Image", rgb_image);
-    namedWindow("Depth Image", WINDOW_AUTOSIZE );
-    imshow("Depth Image", d_image);*/
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>); 
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>); 
 
     // my camera parameters
     float cx = 330.2f; //optical center x coordinate
@@ -41,7 +36,7 @@ int main() {
     float fx = 522.3f; //focal length x
     float fy = 523.4f; //focal length x
 
-    pcl::PointXYZRGB point;
+	pcl::PointXYZRGB point;
 
     int imageDepth;
     cv::Vec3b pixel;
@@ -62,15 +57,15 @@ int main() {
         }
     }
 
-    pcl::visualization::PCLVisualizer::Ptr viewer;
-    viewer = simpleVis(cloud);
+	pcl::visualization::PCLVisualizer::Ptr viewer;
+	viewer = simpleVis(cloud);
 
-    while (!viewer->wasStopped ())
-    {
-        viewer->spinOnce (100);
-    }
-    
-    waitKey(0);
+	while (!viewer->wasStopped ())
+	{
+		viewer->spinOnce (100);
+	}
+	
+	waitKey(0);
 
 	return 0;
 }
