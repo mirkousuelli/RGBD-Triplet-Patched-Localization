@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-03-12T14:51:49.764Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15" etag="v0HRHRbNCtxJRlfI0mtL" version="17.1.2" type="github" pages="2">
+<mxfile host="app.diagrams.net" modified="2022-03-12T14:52:27.112Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15" etag="st1Umxr0NIHvQ9ekmE5p" version="17.1.2" type="github" pages="2">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Components">
     <mxGraphModel dx="788" dy="538" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -152,14 +152,14 @@
     </mxGraphModel>
   </diagram>
   <diagram id="QlGGPzCKt4xssirYI50x" name="Classes">
-    <mxGraphModel dx="652" dy="445" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="541" dy="369" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="SgYKUem5aVHlXxRxo-qd-0" />
         <mxCell id="SgYKUem5aVHlXxRxo-qd-1" parent="SgYKUem5aVHlXxRxo-qd-0" />
         <mxCell id="bNGArXJucVCeb-CV9Sgj-11" value="" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=90;tabHeight=20;tabPosition=left;html=1;fillColor=none;" parent="SgYKUem5aVHlXxRxo-qd-1" vertex="1">
           <mxGeometry x="239" y="225" width="350" height="190" as="geometry" />
         </mxCell>
-        <mxCell id="bNGArXJucVCeb-CV9Sgj-0" value="Frame" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=none;" parent="SgYKUem5aVHlXxRxo-qd-1" vertex="1" collapsed="1">
+        <mxCell id="bNGArXJucVCeb-CV9Sgj-0" value="Picture" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;fillColor=none;" parent="SgYKUem5aVHlXxRxo-qd-1" vertex="1" collapsed="1">
           <mxGeometry x="374" y="285" width="80" height="26" as="geometry">
             <mxRectangle x="334" y="120" width="160" height="34" as="alternateBounds" />
           </mxGeometry>
