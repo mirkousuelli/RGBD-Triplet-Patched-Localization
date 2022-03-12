@@ -1,49 +1,31 @@
-import numpy as np
 import cv2
 
-# image loading
-img_1 = cv2.imread('../Dataset/00000-color.png')
-img_2 = cv2.imread('../Dataset/00060-color.png')
 
-# convert it to grayscale
-img_1_bw = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
-img_2_bw = cv2.cvtColor(img_2, cv2.COLOR_BGR2GRAY)
+class Detector:
+    ORB = 'ORB'
+    SIFT = 'SIFT'
+    DNN = 'DNN'
 
-# detector initialization
-detector = cv2.ORB_create()
+    def __init__(self, _num_features, _method):
+        self.num_features = _num_features
 
-# matcher initialization
-FLANN_INDEX_LSH = 6
-index_params = dict(algorithm=FLANN_INDEX_LSH, table_number=6, key_size=12, multi_probe_level=1)
-search_params = dict(checks=50)
-matcher = cv2.FlannBasedMatcher(indexParams=index_params, searchParams=search_params)
+        if _method == self.ORB:
+            self.core = cv2.ORB_create(self.num_features)
+            print('[Detector] ORB detector initialized')
+        elif _method == self.SIFT:
+            self.core = cv2.SIFT_create(self.num_features)
+            print('[Detector] SIFT detector initialized')
+        elif _method == self.DNN:
+            print('[Detector][WIP] DNN to be done yet...')
+        else:
+            print('\033[91m' + '[Detector][ERROR] Method not found' + '\033[0m')
 
-# extract features
-key_points_1, descriptors_1 = detector.detectAndCompute(img_1_bw, None)
-key_points_2, descriptors_2 = detector.detectAndCompute(img_2_bw, None)
+    @staticmethod
+    def __preprocess(_img):
+        assert _img.shape[2] > 1
+        print('[Detector] Image preprocessed to gray scale')
+        return cv2.cvtColor(_img, cv2.COLOR_BGR2GRAY)
 
-# match descriptors through kNN
-matches = matcher.knnMatch(descriptors_1, descriptors_2, k=2)
-
-# filter the good ones
-good = []
-try:
-    for m, n in matches:
-        if m.distance < 0.8 * n.distance:
-            good.append(m)
-except ValueError:
-    pass
-
-# plotting settings
-draw_params = dict(matchColor=-1,  # draw matches in green color
-                   singlePointColor=None,
-                   matchesMask=None,  # draw only inliers
-                   flags=2)
-final_img = cv2.drawMatches(img_1, key_points_1,
-                            img_2, key_points_2,
-                            good[:10], None, **draw_params)
-final_img = cv2.resize(final_img, (1280, 480))
-
-# Show the final image
-cv2.imshow("Matches", final_img)
-cv2.waitKey()
+    def detectAndCompute(self, _img):
+        print('[Detector] Key points and descriptors are going to be detected')
+        return self.core.detectAndCompute(self.__preprocess(_img), None)
