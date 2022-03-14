@@ -1,10 +1,10 @@
 import cv2
-from Detector import Detector
-from Matcher import Matcher
+from tools.Detector import Detector
+from tools.Matcher import Matcher
 
 # image loading
-img_1 = cv2.imread('../Dataset/00000-color.png')
-img_2 = cv2.imread('../Dataset/00060-color.png')
+img_1 = cv2.imread('../../Dataset/00000-color.png')
+img_2 = cv2.imread('../../Dataset/00060-color.png')
 
 # objects initialization
 detector = Detector(50, 'ORB')

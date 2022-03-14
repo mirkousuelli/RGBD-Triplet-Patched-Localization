@@ -2,8 +2,8 @@ import numpy as np
 import cv2
 
 # image loading
-img_1 = cv2.imread('../Dataset/00000-color.png')
-img_2 = cv2.imread('../Dataset/00060-color.png')
+img_1 = cv2.imread('../../Dataset/00000-color.png')
+img_2 = cv2.imread('../../Dataset/00060-color.png')
 
 # convert it to grayscale
 img_1_bw = cv2.cvtColor(img_1, cv2.COLOR_BGR2GRAY)
