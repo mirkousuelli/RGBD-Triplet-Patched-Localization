@@ -1,3 +1,14 @@
+"""
+Project : RGB-D Semantic Sampling
+Authors : Marco Petri and Mirko Usuelli
+-----------------------------------------------
+Degree : M.Sc. Computer Science and Engineering
+Course : Image Analysis and Computer Vision
+Professor : Vincenzo Caglioti
+Advisors : Giacomo Boracchi, Luca Magri
+University : Politecnico di Milano
+A.Y. : 2021 - 2022
+"""
 import cv2
 
 
@@ -12,9 +23,8 @@ class Matcher:
             index_params = dict(algorithm=6, table_number=6, key_size=12, multi_probe_level=1)
             search_params = dict(checks=self.num_features)
             self.core = cv2.FlannBasedMatcher(indexParams=index_params, searchParams=search_params)
-            print('[Matcher] Flann matcher initialized')
         elif _method == self.DNN:
-            print('[Matcher][WIP] DNN matcher to be done yet...')
+            print('\033[91m' + '[Matcher][WIP] DNN matcher to be done yet...' + '\033[0m')
         else:
             print('\033[91m' + '[Matcher][ERROR] Method not found' + '\033[0m')
 
@@ -24,7 +34,6 @@ class Matcher:
         try:
             for m, n in _matches:
                 good.append(m if m.distance < n.distance else n)
-            print('[Matcher] Matches successfully filtered')
             good.sort(key=lambda x: x.distance, reverse=False)
             return good
         except ValueError:
@@ -34,7 +43,6 @@ class Matcher:
     def match(self, _descriptors_1, _descriptors_2):
         matches = self.core.knnMatch(_descriptors_1, _descriptors_2, k=2)
         matches = [x for x in matches if len(x) == 2]
-        print('[Matcher] Matches computed')
         return self.__filter(matches)
 
     @staticmethod
@@ -47,5 +55,4 @@ class Matcher:
         final_img = cv2.drawMatches(_img_1, _key_points_1,
                                     _img_2, _key_points_2,
                                     _matches[:limit], None, **draw_params)
-        print('[Matcher] Matches ready to be drawn')
         return cv2.resize(final_img, (_img_1.shape[1] * 2, _img_1.shape[0]))
