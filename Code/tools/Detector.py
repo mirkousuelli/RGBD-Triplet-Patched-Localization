@@ -6,8 +6,7 @@ Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
-University : Politecnico di Milano
-A.Y. : 2021 - 2022
+University : Politecnico di Milano - (A.Y. 2021/2022)
 """
 import cv2
 
@@ -37,6 +36,7 @@ class Detector:
         elif _method == self.SIFT:
             self.core = cv2.SIFT_create(self.num_features)
         elif _method == self.DNN:
+            # TODO : link and develop Detecting Deep Neural Network
             print('\033[91m' + '[Detector][WIP] DNN to be done yet...' + '\033[0m')
         else:
             print('\033[91m' + '[Detector][ERROR] Method not found' + '\033[0m')
@@ -44,8 +44,7 @@ class Detector:
     @staticmethod
     def __preprocess(_img):
         """
-        Private static method useful to preprocess the image in grayscale and
-        in a built-in way within the class.
+        Private static method useful to preprocess the image in grayscale and in a built-in way within the class.
         I : image in RGB
         O : image in grayscale
         """
