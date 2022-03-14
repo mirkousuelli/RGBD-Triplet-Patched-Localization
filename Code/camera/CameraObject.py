@@ -18,7 +18,7 @@ class CameraObject(object):
 		self.errors = json.load(file)
 		file.close()
 		
-	def raise_error(self, error_name: str) -> str:
+	def _raise_error(self, error_name: str) -> str:
 		"""Prints the error message given the error name key.
 		
 		Parameters
