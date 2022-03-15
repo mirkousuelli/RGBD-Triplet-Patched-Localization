@@ -3,9 +3,11 @@
 # External imports
 
 # In-project imports
-from camera.CameraObject import CameraObject
+from ProjectObject import ProjectObject
 
 # TODO: wow, implement me please
-class Camera(CameraObject):
+class Camera(ProjectObject):
+	ERROR_KEY = ProjectObject.ERROR_KEY + ["camera"]
+	
 	def __init__(self):
 		super().__init__()

@@ -4,11 +4,9 @@ import os
 # External imports
 import json
 
-# In-project imports
 
-# TODO: wow, implement me please
-class CameraObject(object):
-	ERROR_KEY = "NONE"
+class ProjectObject(object):
+	ERROR_KEY = ["object"]
 	
 	def __init__(self):
 		super().__init__()
@@ -26,7 +24,11 @@ class CameraObject(object):
 		error_name : str
 			The key for the error type of that object.
 		"""
-		try:
-			return self.errors[self.ERROR_KEY][error_name]
-		except KeyError:
-			return self.errors["parent"][error_name]
+		for i in range(len(self.ERROR_KEY)):
+			try:
+				curr = - (i + 1)
+				return self.errors[self.ERROR_KEY[curr]][error_name]
+			except KeyError:
+				pass
+		
+		return self.errors["object"]["generic"]

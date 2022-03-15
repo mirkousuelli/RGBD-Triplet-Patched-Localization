@@ -1,0 +1,32 @@
+{
+	"object": {
+		"generic": "Generic error, there is no specific description for the error."
+	},
+	"camera": {
+
+	},
+	"frame": {
+
+	},
+	"action": {
+
+	},
+	"recording": {
+
+	},
+	"visualizer": {
+
+	},
+	"merger": {
+
+	},
+	"matcher": {
+
+	},
+	"localizer": {
+
+	},
+	"detector": {
+
+	}
+}
