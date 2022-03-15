@@ -18,9 +18,9 @@ class Detector:
     """
 
     # Techniques available:
-    ORB = 'ORB'
-    SIFT = 'SIFT'
-    DNN = 'DNN'
+    ORB = "ORB"
+    SIFT = "SIFT"
+    DNN = "DNN"
 
     def __init__(self, _num_features, _method):
         """
@@ -37,14 +37,15 @@ class Detector:
             self.core = cv2.SIFT_create(self.num_features)
         elif _method == self.DNN:
             # TODO : link and develop Detecting Deep Neural Network
-            print('\033[91m' + '[Detector][WIP] DNN to be done yet...' + '\033[0m')
+            print('\033[91m' + 'DNN to be done yet...' + '\033[0m')
         else:
-            print('\033[91m' + '[Detector][ERROR] Method not found' + '\033[0m')
+            print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def __preprocess(_img):
+    def _preprocess(_img):
         """
-        Private static method useful to preprocess the image in grayscale and in a built-in way within the class.
+        Private static method useful to preprocess the image in grayscale and
+        in a built-in way within the class.
         I : image in RGB
         O : image in grayscale
         """
@@ -54,12 +55,12 @@ class Detector:
         # returning it back to grayscale
         return cv2.cvtColor(_img, cv2.COLOR_BGR2GRAY)
 
-    def detectAndCompute(self, _img):
+    def detect_and_compute(self, _img):
         """
-        Merge the behaviour of all possible core techniques in one function in purpose
-        of detecting and computing features.
+        Merge the behaviour of all possible core techniques in one function in
+        purpose of detecting and computing features.
         I : image
         O : key points within the given image + their associated descriptors
         """
         # before the proper detection it is needed a grayscale preprocess
-        return self.core.detectAndCompute(self.__preprocess(_img), None)
+        return self.core.detectAndCompute(self._preprocess(_img), None)
