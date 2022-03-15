@@ -39,15 +39,15 @@ class Matcher:
                                               searchParams=search_params)
         elif _method == self.DNN:
             # TODO : link and develop Matching Deep Neural Network
-            print('\033[91m' + ' DNN matcher to be done yet...' + '\033[0m')
+            print('\033[91m' + 'DNN matcher to be done yet...' + '\033[0m')
         else:
-            print('\033[91m' + ' Method not found' + '\033[0m')
+            print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _filter(_matches):
+    def __filter(_matches):
         """
-        Private static method useful to filter the images matching in a
-        built-in way within the class.
+        Private static method useful to filter the images matching in a built-in
+        way within the class.
         I : matching alternatives list
         O : selected matching list
         """
@@ -56,10 +56,8 @@ class Matcher:
         try:
             for m, n in _matches:
                 # appending the best distance between the two alternatives
-                good.append(m if m.distance < n.distance else n)
-            # sorting from the closest to the worst matching
-            # found in terms of distances
-            good.sort(key=lambda x: x.distance, reverse=False)
+                if m.distance < 0.7 * n.distance:
+                    good.append(m)
             return good
         except ValueError:
             print('\033[91m' + 'kNN matching error' + '\033[0m')
@@ -67,18 +65,19 @@ class Matcher:
 
     def match(self, _descriptors_1, _descriptors_2):
         """
-        Merge the behaviour of all possible core techniques in one function
-        in purpose of matching descriptors of the two images.
+        Merge the behaviour of all possible core techniques in one function in
+        purpose of matching descriptors of the two images.
         I : images' descriptors
         O : selected matching list
         """
         matches = self.core.knnMatch(_descriptors_1, _descriptors_2, k=2)
         matches = [x for x in matches if len(x) == 2]
-        return self._filter(matches)
+        return self.__filter(matches)
 
     @staticmethod
-    def draw_matches(_img_1, _key_points_1, _img_2, _key_points_2, _matches,
-                     limit=-1):
+    def draw_matches(_img_1, _key_points_1,
+                     _img_2, _key_points_2,
+                     _matches, limit=-1):
         """
         Private static method to be used to draw the final result of the
         matching procedure

@@ -18,9 +18,9 @@ class Detector:
     """
 
     # Techniques available:
-    ORB = "ORB"
-    SIFT = "SIFT"
-    DNN = "DNN"
+    ORB = 'ORB'
+    SIFT = 'SIFT'
+    DNN = 'DNN'
 
     def __init__(self, _num_features, _method):
         """
@@ -42,7 +42,7 @@ class Detector:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _preprocess(_img):
+    def __preprocess(_img):
         """
         Private static method useful to preprocess the image in grayscale and
         in a built-in way within the class.
@@ -63,4 +63,4 @@ class Detector:
         O : key points within the given image + their associated descriptors
         """
         # before the proper detection it is needed a grayscale preprocess
-        return self.core.detectAndCompute(self._preprocess(_img), None)
+        return self.core.detectAndCompute(self.__preprocess(_img), None)
