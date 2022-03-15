@@ -12,7 +12,6 @@ class Frame(ProjectObject):
 
 	def __init__(self):
 		super().__init__()
-		# TODO: hey Marco, mi servirebbero questi due attributes per fare detection + matching
 		self.key_points = None
 		self.descriptors = None
 

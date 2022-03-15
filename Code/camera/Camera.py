@@ -5,6 +5,7 @@
 # In-project imports
 from ProjectObject import ProjectObject
 
+
 # TODO: wow, implement me please
 class Camera(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["camera"]

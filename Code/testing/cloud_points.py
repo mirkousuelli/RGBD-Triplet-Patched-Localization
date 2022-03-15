@@ -3,8 +3,8 @@ import open3d as o3d
 from matplotlib import pyplot as plt
 
 #redwood_rgbd = o3d.data.SampleRedwoodRGBDImages()
-color_raw = o3d.io.read_image('../../Dataset/00000-color.png')#)redwood_rgbd.color_paths[0])
-depth_raw = o3d.io.read_image('../../Dataset/00000-depth.png')#)redwood_rgbd.depth_paths[0])
+color_raw = o3d.io.read_image('../../Dataset/Colors/00000-color.png')#)redwood_rgbd.color_paths[0])
+depth_raw = o3d.io.read_image('../../Dataset/Depths/00000-depth.png')#)redwood_rgbd.depth_paths[0])
 rgbd_image = o3d.geometry.RGBDImage.create_from_tum_format(color_raw, depth_raw)
 print(rgbd_image)
 
