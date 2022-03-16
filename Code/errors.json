@@ -15,7 +15,8 @@
 
 	},
 	"visualizer": {
-
+		"rgb_colors": "The color scale can be only one between r, b or b.",
+		"missing_frame": "It is impossible to print the color and depth values without the frame."
 	},
 	"merger": {
 
