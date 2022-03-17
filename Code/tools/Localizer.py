@@ -8,3 +8,9 @@ Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
+
+
+# TODO : apply RANSAC
+class Localizer:
+	def __init__(self):
+		pass
