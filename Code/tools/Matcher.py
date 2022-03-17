@@ -12,7 +12,7 @@ import cv2
 
 
 class Matcher:
-    """
+    """ Class.
     Class implementing the tool 'Matcher' able to match relevant
     descriptors in an action, namely two images.
     """
@@ -21,73 +21,121 @@ class Matcher:
     FLANN = 'FLANN'
     DNN = 'DNN'
 
-    def __init__(self, _num_features, _method):
+    def __init__(self,
+                 num_features,
+                 method,
+                 filter_test=0.7):
+        """ Constructor.
+
+        Parameters
+        ----------
+        num_features : int
+            The number of features to be detected and matched afterwards.
+
+        method : str
+            The string name of the chosen matching-method.
+
+        filter_test : int
+            Value used to filter matching features through Lowe's Test.
         """
-        Constructor.
-        I : number of features to be detected and the desired matching method
-        O : -
-        """
-        self.num_features = _num_features
+        self.num_features = num_features
+        self.filter_test = filter_test
 
         # method choice
-        if _method == self.FLANN:
+        if method == self.FLANN:
             # FLANN hyper-parameters by default
-            index_params = dict(algorithm=6, table_number=6, key_size=12,
+            index_params = dict(algorithm=6,
+                                table_number=6,
+                                key_size=12,
                                 multi_probe_level=1)
             search_params = dict(checks=self.num_features)
             self.core = cv2.FlannBasedMatcher(indexParams=index_params,
                                               searchParams=search_params)
-        elif _method == self.DNN:
+        elif method == self.DNN:
             # TODO : link and develop Matching Deep Neural Network
             print('\033[91m' + 'DNN matcher to be done yet...' + '\033[0m')
         else:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def __filter(_matches):
-        """
+    def _filter(matches,
+                filter_test):
+        """ Static Method.
         Private static method useful to filter the images matching in a built-in
         way within the class.
-        I : matching alternatives list
-        O : selected matching list
+
+        Parameters
+        ----------
+        matches : list
+            Matched features.
+
+        filter_test : int
+            Value used to filter matching features through Lowe's Test.
         """
-        # empty list which will be enriched of inliers matching
+        # empty list which will be enriched of inliers
         good = []
         try:
-            for m, n in _matches:
-                # appending the best distance between the two alternatives
-                if m.distance < 0.7 * n.distance:
+            for m, n in matches:
+                # Lowe's test
+                if m.distance < filter_test * n.distance:
                     good.append(m)
             return good
         except ValueError:
-            print('\033[91m' + 'kNN matching error' + '\033[0m')
+            print('\033[91m' + 'Filter matching error' + '\033[0m')
             pass
 
-    def match(self, _descriptors_1, _descriptors_2):
-        """
+    def match(self,
+              descriptors_1,
+              descriptors_2):
+        """ Method.
         Merge the behaviour of all possible core techniques in one function in
         purpose of matching descriptors of the two images.
-        I : images' descriptors
-        O : selected matching list
+
+        Parameters
+        ----------
+        descriptors_1 : list
+            Feature descriptors of the first image.
+
+        descriptors_2 : list
+            Feature descriptors of the second image.
         """
-        matches = self.core.knnMatch(_descriptors_1, _descriptors_2, k=2)
+        matches = self.core.knnMatch(descriptors_1, descriptors_2, k=2)
         matches = [x for x in matches if len(x) == 2]
-        return self.__filter(matches)
+        return self._filter(matches)
 
     @staticmethod
-    def draw_matches(_img_1, _key_points_1,
-                     _img_2, _key_points_2,
-                     _matches, limit=-1):
-        """
+    def draw_matches(img_1,  # : Frame
+                     key_points_1,
+                     img_2,  # : Frame
+                     key_points_2,
+                     matches,
+                     limit=-1):
+        """ Static Method.
         Private static method to be used to draw the final result of the
-        matching procedure
-        I : images + images' key points (i.e. features) + matching list
-        (+ matching visual limit in drawing)
-        O : action image (i.e. merge of the two frames + matching links
-        highlighted between key points)
+        matching procedure.
+
+        Parameters
+        ----------
+        img_1 : Frame
+            First image.
+
+        key_points_1 : list
+            Key points of the first image, i.e. the features.
+
+        img_2 : Frame
+            Second image.
+
+        key_points_2 : list
+            Key points of the second image, i.e. the features.
+
+        matches : list
+            Matched features.
+
+        limit : int
+            Integer number which limits how many matching links to be drawn.
         """
         # pre-conditions
-        assert _img_1.shape == _img_2.shape
+        assert img_1.shape == img_2.shape
 
         # hyper-parameters before drawing
         draw_params = dict(matchColor=-1,  # draw matches in green color
@@ -96,8 +144,9 @@ class Matcher:
                            flags=2)
 
         # proper drawing method
-        final_img = cv2.drawMatches(_img_1, _key_points_1,
-                                    _img_2, _key_points_2,
-                                    _matches[:limit], None, **draw_params)
+        final_img = cv2.drawMatches(img_1, key_points_1,
+                                    img_2, key_points_2,
+                                    matches[:limit],
+                                    None, **draw_params)
 
-        return cv2.resize(final_img, (_img_1.shape[1] * 2, _img_1.shape[0]))
+        return cv2.resize(final_img, (img_1.shape[1] * 2, img_1.shape[0]))
