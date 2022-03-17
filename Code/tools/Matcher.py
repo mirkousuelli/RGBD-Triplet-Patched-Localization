@@ -24,6 +24,7 @@ class Matcher:
     def __init__(self,
                  num_features,
                  method,
+                 search_algorithm=6,
                  filter_test=0.7):
         """ Constructor.
 
@@ -35,7 +36,11 @@ class Matcher:
         method : str
             The string name of the chosen matching-method.
 
-        filter_test : int
+        search_algorithm : int
+            Search algorithm used by the matcher that must be recognizable also
+            by the detecting method.
+
+        filter_test : float
             Value used to filter matching features through Lowe's Test.
         """
         self.num_features = num_features
@@ -44,10 +49,14 @@ class Matcher:
         # method choice
         if method == self.FLANN:
             # FLANN hyper-parameters by default
-            index_params = dict(algorithm=6,
-                                table_number=6,
-                                key_size=12,
-                                multi_probe_level=1)
+            if search_algorithm == 6:
+                index_params = dict(algorithm=search_algorithm,
+                                    table_number=6,
+                                    key_size=12,
+                                    multi_probe_level=1)
+            else:
+                index_params = dict(algorithm=search_algorithm,
+                                    trees=5)
             search_params = dict(checks=self.num_features)
             self.core = cv2.FlannBasedMatcher(indexParams=index_params,
                                               searchParams=search_params)
@@ -101,7 +110,7 @@ class Matcher:
         """
         matches = self.core.knnMatch(descriptors_1, descriptors_2, k=2)
         matches = [x for x in matches if len(x) == 2]
-        return self._filter(matches)
+        return self._filter(matches, self.filter_test)
 
     @staticmethod
     def draw_matches(img_1,  # : Frame

@@ -18,8 +18,8 @@ class Detector:
     """
 
     # Techniques available:
-    ORB = "ORB"
-    SIFT = "SIFT"
+    ORB = "ORB"  # Matcher.search_algorithm = 6 : LSH
+    SIFT = "SIFT"  # Matcher.search_algorithm = 0 or 1 : KD-tree
     DNN = "DNN"
 
     def __init__(self,

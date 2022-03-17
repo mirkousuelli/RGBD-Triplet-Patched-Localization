@@ -38,8 +38,18 @@ class Merger:
 		matcher_method : str
 			The string name of the chosen matching-method.
 		"""
-		self.detector = Detector(num_features, detector_method)
-		self.matcher = Matcher(num_features, matcher_method)
+		# Detector initialization
+		self.detector = Detector(num_features,
+		                         detector_method)
+
+		# the algorithm changes based on the technique adopted
+		algorithm = 0 if detector_method == "SIFT" else 6
+
+		# Matcher initialization
+		self.matcher = Matcher(num_features,
+		                       matcher_method,
+		                       search_algorithm=algorithm,
+		                       filter_test=0.7)
 
 	def merge(self,
 	          img_1,  # : Frame
