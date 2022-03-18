@@ -154,7 +154,7 @@ class Matcher:
         :type limit: int
 
         :return:
-        The two images merged into one image with matching links drawn.
+            The two images merged into one image with matching links drawn.
         :rtype: image
         """
         # pre-conditions
