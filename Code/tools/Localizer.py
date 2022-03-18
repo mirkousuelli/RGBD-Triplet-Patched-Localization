@@ -1,7 +1,7 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
------------------------------------------------
+--------------------------------------------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti

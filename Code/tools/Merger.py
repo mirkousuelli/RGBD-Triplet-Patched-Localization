@@ -1,22 +1,20 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
------------------------------------------------
+--------------------------------------------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
-import cv2
 from camera.Frame import Frame
 from tools.Detector import Detector
 from tools.Matcher import Matcher
 
 
 class Merger:
-	""" Class.
-	Class implementing the tool 'Merger' which encapsulates both the
+	""" Class implementing the tool 'Merger' which encapsulates both the
 	Detector and the Matcher in purpose of simplifying the overall sampling
 	procedure.
 	"""
@@ -27,16 +25,17 @@ class Merger:
 	             matcher_method="FLANN"):
 		""" Constructor.
 
-		Parameters
-		----------
-		num_features : int
+		:param num_features:
 			The number of features to be detected and matched afterwards.
+		:type num_features: int
 
-		detector_method : str
+		:param detector_method:
 			The string name of the chosen detecting-method.
+		:type detector_method: str
 
-		matcher_method : str
+		:param matcher_method:
 			The string name of the chosen matching-method.
+		:type matcher_method: str
 		"""
 		# Detector initialization
 		self.detector = Detector(num_features,
@@ -55,20 +54,24 @@ class Merger:
 	          img_1,  # : Frame
 	          img_2,  # : Frame
 	          limit=-1):
-		""" Method.
-		Merge two images by first detecting their features and then matching
+		""" Merge two images by first detecting their features and then matching
 		their descriptors all at once.
 
-		Parameters
-		----------
-		img_1 : Frame
+		:param img_1:
 			First image.
+		:type img_1: Frame
 
-		img_2 : Frame
+		:param img_2:
 			Second image.
+		:type img_2: Frame
 
-		limit : int
+		:param limit:
 			Integer number which limits how many matching links to be drawn.
+		:type limit: int
+
+		:return:
+			The two images merged into one image with matching links drawn.
+		:rtype: image
 		"""
 		key_points_1, descriptors_1 = self.detector.detect_and_compute(img_1)
 		key_points_2, descriptors_2 = self.detector.detect_and_compute(img_2)

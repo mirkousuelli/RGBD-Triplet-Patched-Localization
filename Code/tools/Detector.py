@@ -1,7 +1,7 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
------------------------------------------------
+--------------------------------------------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
@@ -12,8 +12,7 @@ import cv2
 
 
 class Detector:
-    """ Class.
-    Class implementing the tool 'Detector' able to detect relevant
+    """ Class implementing the tool 'Detector' able to detect relevant
     corners/features in a single image.
     """
 
@@ -27,13 +26,13 @@ class Detector:
                  method):
         """ Constructor.
 
-        Parameters
-        ----------
-        num_features : int
+        :param num_features:
             The number of features to be detected and matched afterwards.
+        :type num_features: int
 
-        method : str
+        :param method:
             The string name of the chosen detecting-method.
+        :type method: str
         """
         self.num_features = num_features
 
@@ -50,14 +49,16 @@ class Detector:
 
     @staticmethod
     def _preprocess(img):  # : Frame
-        """ Static Method.
-        Private static method useful to preprocess the image in grayscale and
-        in a built-in way within the class.
+        """ Private static method useful to preprocess the image in grayscale
+        and in a built-in way within the class.
 
-        Parameters
-        ----------
-        img : Frame
+        :param img:
             Image in RGB to be processed into grayscale.
+        :type img: Frame
+
+        :return:
+            Grayscale image.
+        :rtype: image
         """
         # checking that the image has more than one channel
         assert img.shape[2] > 1
@@ -67,14 +68,16 @@ class Detector:
 
     def detect_and_compute(self,
                            img):  # : Frame
-        """ Method.
-        Merge the behaviour of all possible core techniques in one function in
-        purpose of detecting and computing features.
+        """ Merge the behaviour of all possible core techniques in one function
+        in purpose of detecting and computing features.
 
-        Parameters
-        ----------
-        img : Frame
+        :param img:
             Image to be feature-detected.
+        :rtype img: Frame
+
+        :returns:
+            Key-points and Descriptors
+        :rtype: Tuple[object, object]
         """
         # before the proper detection it is needed a grayscale preprocess
         return self.core.detectAndCompute(self._preprocess(img), None)

@@ -1,7 +1,7 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
------------------------------------------------
+--------------------------------------------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
@@ -12,8 +12,7 @@ import cv2
 
 
 class Matcher:
-    """ Class.
-    Class implementing the tool 'Matcher' able to match relevant
+    """ Class implementing the tool 'Matcher' able to match relevant
     descriptors in an action, namely two images.
     """
 
@@ -28,20 +27,22 @@ class Matcher:
                  filter_test=0.7):
         """ Constructor.
 
-        Parameters
-        ----------
-        num_features : int
+        :param num_features
             The number of features to be detected and matched afterwards.
+        :type num_features: int
 
-        method : str
+        :param method:
             The string name of the chosen matching-method.
+        :type method: str
 
-        search_algorithm : int
+        :param search_algorithm:
             Search algorithm used by the matcher that must be recognizable also
             by the detecting method.
+        :type search_algorithm: int
 
-        filter_test : float
+        :param filter_test:
             Value used to filter matching features through Lowe's Test.
+        :type filter_test: float
         """
         self.num_features = num_features
         self.filter_test = filter_test
@@ -69,17 +70,20 @@ class Matcher:
     @staticmethod
     def _filter(matches,
                 filter_test):
-        """ Static Method.
-        Private static method useful to filter the images matching in a built-in
-        way within the class.
+        """ Private static method useful to filter the images matching in a
+        built-in way within the class.
 
-        Parameters
-        ----------
-        matches : list
+        :param matches:
             Matched features.
+        :type matches: list
 
-        filter_test : int
+        :param filter_test:
             Value used to filter matching features through Lowe's Test.
+        :type: int
+
+        :return:
+            Good matches which passed the Lowe's test.
+        :rtype: list
         """
         # empty list which will be enriched of inliers
         good = []
@@ -96,17 +100,20 @@ class Matcher:
     def match(self,
               descriptors_1,
               descriptors_2):
-        """ Method.
-        Merge the behaviour of all possible core techniques in one function in
-        purpose of matching descriptors of the two images.
+        """ Merge the behaviour of all possible core techniques in one function
+        in purpose of matching descriptors of the two images.
 
-        Parameters
-        ----------
-        descriptors_1 : list
+        :param descriptors_1:
             Feature descriptors of the first image.
+        :type descriptors_1: object
 
-        descriptors_2 : list
+        :param descriptors_2:
             Feature descriptors of the second image.
+        :type descriptors_2: object
+
+        :return:
+            Good matches which passed the Lowe's test.
+        :rtype: list
         """
         matches = self.core.knnMatch(descriptors_1, descriptors_2, k=2)
         matches = [x for x in matches if len(x) == 2]
@@ -119,29 +126,36 @@ class Matcher:
                      key_points_2,
                      matches,
                      limit=-1):
-        """ Static Method.
-        Private static method to be used to draw the final result of the
+        """ Private static method to be used to draw the final result of the
         matching procedure.
 
-        Parameters
-        ----------
-        img_1 : Frame
+        :param img_1:
             First image.
+        :type img_1: Frame
 
-        key_points_1 : list
+        :param key_points_1:
             Key points of the first image, i.e. the features.
+        :type key_points_1: list
 
-        img_2 : Frame
+        :param img_2:
             Second image.
+        :type img_2: Frame
 
-        key_points_2 : list
+        :param key_points_2:
             Key points of the second image, i.e. the features.
+        :type key_points_2: list
 
-        matches : list
+        :param matches:
             Matched features.
+        :type matches: list
 
-        limit : int
+        :param limit:
             Integer number which limits how many matching links to be drawn.
+        :type limit: int
+
+        :return:
+        The two images merged into one image with matching links drawn.
+        :rtype: image
         """
         # pre-conditions
         assert img_1.shape == img_2.shape
