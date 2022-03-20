@@ -1,5 +1,5 @@
 # Python imports
-from typing import Tuple
+from typing import Tuple, Union
 
 # External imports
 import open3d as o3d
@@ -20,29 +20,47 @@ class Frame(ProjectObject):
 		self.key_points = None
 		self.descriptors = None
 		
-	def get_pil_images(self) -> Tuple[Image.Image, Image.Image]:
-		"""Return the PIL images of color and depth.
-		
-		Returns
-		-------
-		color_img : PIL.Image
-			The color image specified for this frame.
-		depth_img : PIL.Image
-			The image with the depth information.
-		"""
-		return Image.open(self.__color_path), Image.open(self.__depth_path)
-	
-	def get_o3d_images(self) -> Tuple[o3d.geometry.Image, o3d.geometry.Image]:
+	def get_pil_images(self, ret : str = None) -> Union[Image.Image,
+														Tuple[Image.Image,
+															  Image.Image]]:
 		"""Return the PIL images of color and depth.
 
-		Returns
-		-------
-		color_img : PIL.Image
+		:param ret:
+			Specified whether to return one or both the images.
+		
+		:return:
 			The color image specified for this frame.
-		depth_img : PIL.Image
+		:rtype: PIL.image
 			The image with the depth information.
+		:rtype: PIL.image
 		"""
-		return o3d.io.read_image(self.__color_path), o3d.io.read_image(self.__depth_path)
+		if ret is None:
+			return Image.open(self.__color_path), Image.open(self.__depth_path)
+		elif ret == "rgb":
+			return Image.open(self.__color_path)
+		elif ret == "depth":
+			return Image.open(self.__depth_path)
+	
+	def get_o3d_images(self, ret : str = None) -> Union[o3d.geometry.Image,
+														Tuple[o3d.geometry.Image,
+															  o3d.geometry.Image]]:
+		"""Return the open3d images of color and depth.
+
+		:param ret:
+			Specified whether to return one or both the images.
+		
+		:return:
+			The color image specified for this frame.
+		:rtype: open3d.image
+			The image with the depth information.
+		:rtype: open3d.image
+		"""
+		if ret is None:
+			return o3d.io.read_image(self.__color_path), o3d.io.read_image(self.__depth_path)
+		elif ret == "rgb":
+			return o3d.io.read_image(self.__color_path)
+		elif ret == "depth":
+			return o3d.io.read_image(self.__depth_path)
 	
 	def get_rgbd_image(self) -> o3d.geometry.RGBDImage:
 		# TODO: implement automatic way to extract rgbd from a couple of any type of images
