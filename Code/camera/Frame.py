@@ -1,8 +1,11 @@
 # Python imports
+import linecache
+import os
 from typing import Tuple, Union
 
 # External imports
 import cv2
+import numpy as np
 import open3d as o3d
 from PIL import Image
 
@@ -14,12 +17,29 @@ class Frame(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["frame"]
 
 	def __init__(self, color_path: str,
-				 depth_path: str):
+				 depth_path: str,
+				 img_index: int):
 		super().__init__()
 		self.__color_path = color_path
 		self.__depth_path = depth_path
+		self.__index = img_index
 		self.key_points = None
 		self.descriptors = None
+
+	def extract_pose(self) -> np.ndarray:
+		"""Get the pose of the image from the paths.
+		
+		:return:
+			The array specifying the pose of the current image with respect to
+			the first image.
+		:rtype: np.ndarray
+		"""
+		camera_dir = os.path.dirname(__file__)
+		file_path = os.path.join(camera_dir, '../../Dataset/Poses/02.pose')
+		pose = linecache.getline(file_path, self.__index + 1)
+		pose = pose.split(" ")[:-1]
+		pose = np.array(pose, dtype=float)
+		return pose
 
 	def get_pil_images(self, ret : str = None) -> Union[Image.Image,
 	                                                    Tuple[Image.Image,
@@ -81,7 +101,8 @@ class Frame(ProjectObject):
 	
 	def get_rgbd_image(self) -> o3d.geometry.RGBDImage:
 		# TODO: implement automatic way to extract rgbd from a couple of any type of images
-		pass
+		color, depth = self.get_o3d_images()
+		return o3d.geometry.RGBDImage.create_from_tum_format(color, depth)
 
 	def get_size(self):
 		with Image.open(self.__color_path) as img:
