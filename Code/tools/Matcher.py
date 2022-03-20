@@ -135,10 +135,10 @@ class Matcher:
         :rtype: list
         """
         action.matches = self.core.knnMatch(action.first.descriptors,
-                                     action.second.descriptors,
-                                     k=2)
-        action.matches = [x for x in action.matches if len(x) == 2]
-        action.matches = self._filter(action.matches, self.filter_test)
+                                            action.second.descriptors,
+                                            k=2)
+        action.links = [x for x in action.matches if len(x) == 2]
+        action.links = self._filter(action.links, self.filter_test)
 
     @staticmethod
     def draw_frames_matches(img_1: Frame,
@@ -220,7 +220,7 @@ class Matcher:
                                     action.first.key_points,
                                     action.second.get_cv2_images(ret="rgb"),
                                     action.second.key_points,
-                                    action.matches[:limit],
+                                    action.links[:limit],
                                     None, **draw_params)
 
         width, height = action.first.get_size()

@@ -9,43 +9,53 @@ Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
 import numpy as np
+import cv2
+
+from camera.Action import Action
 
 
 class Localizer:
 	def __init__(self):
-		pass
+		return
 
 	@staticmethod
-	def key_points_to_array(key_points_1, key_points_2, matches):
+	def _key_points_to_array(action: Action):
 		pts_1 = []
 		pts_2 = []
 
 		# ratio test as per Lowe's paper
-		for m, n in matches:
+		for m, n in action.matches:
 			if m.distance < 0.7 * n.distance:
-				pts_1.append(key_points_1[m.queryIdx].pt)
-				pts_2.append(key_points_2[m.trainIdx].pt)
+				pts_1.append(action.first.key_points[m.queryIdx].pt)
+				pts_2.append(action.second.key_points[m.trainIdx].pt)
 		return pts_1, pts_2
 
-	def fundamental_matrix(self, key_points_1, key_points_2, matches):
-		assert points_img_1.shape[0] == points_img_2.shape[0]
+	def drawlines(img_1, img_2, lines, pts_1, pts_2):
+		''' img1 - image on which we draw the epilines for the points in img2
+			lines - corresponding epilines '''
+		r,c = img_1.shape
+		img1 = cv2.cvtColor(img_1,cv2.COLOR_GRAY2BGR)
+		img2 = cv2.cvtColor(img_2,cv2.COLOR_GRAY2BGR)
+		for r,pt1,pt2 in zip(lines, pts_1, pts_2):
+			color = tuple(np.random.randint(0,255,3).tolist())
+			x0,y0 = map(int, [0, -r[2]/r[1] ])
+			x1,y1 = map(int, [c, -(r[2]+r[0]*c)/r[1] ])
+			img1 = cv2.line(img1, (x0,y0), (x1,y1), color,1)
+			img1 = cv2.circle(img1,tuple(pt1),5,color,-1)
+			img2 = cv2.circle(img2,tuple(pt2),5,color,-1)
+		return img_1, img_2
 
-		arr_a = np.column_stack((points_img_1, [1] * points_img_1.shape[0]))
-		arr_b = np.column_stack((points_img_2, [1] * points_img_2.shape[0]))
+	def fundamental_matrix(self, action: Action):
+		pts_1, pts_2 = self._key_points_to_array(action)
+		assert len(pts_1) == len(pts_2)
 
-		arr_a = np.tile(arr_a, 3)
-		arr_b = arr_b.repeat(3, axis=1)
-		A = np.multiply(arr_a, arr_b)
+		pts_1 = np.int32(pts_1)
+		pts_2 = np.int32(pts_2)
+		F, mask = cv2.findFundamentalMat(pts_1, pts_2, cv2.FM_LMEDS)
 
-		_, _, V = np.linalg.svd(A)
-		F_matrix = V[-1]
-		F_matrix = np.reshape(F_matrix, (3, 3))
-
-		# resolve det(F) = 0 constraint using SVD
-		U, S, V = np.linalg.svd(F_matrix)
-		S[-1] = 0
-
-		return U @ np.diagflat(S) @ V
+		# We select only inlier points
+		pts1 = pts_1[mask.ravel() == 1]
+		pts2 = pts_2[mask.ravel() == 1]
 
 	def estimate_fundamental_matrix_with_normalize(Points_a, Points_b):
 		# Try to implement this function as efficiently as possible. It will be
