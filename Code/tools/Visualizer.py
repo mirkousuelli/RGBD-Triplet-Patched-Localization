@@ -16,6 +16,9 @@ import matplotlib.axes
 import matplotlib.pyplot as plt
 
 # Project imports
+import numpy as np
+from PIL import Image
+
 from camera.Frame import Frame
 from camera.Action import Action
 from camera.Recording import Recording
@@ -43,6 +46,7 @@ class Visualizer(ProjectObject):
 		color_scale : str ('b', 'g' or 'r')
 			It is a character representing the color scale used to print the
 			depth image.
+		
 		fig_size : Tuple
 			It is the dimension of the figure on which the image is plotted.
 		"""
@@ -52,6 +56,9 @@ class Visualizer(ProjectObject):
 			raise ValueError(self._raise_error("missing_frame"))
 		
 		color, depth = self.frame.get_pil_images()
+		dn = np.array(depth)
+		dn = dn * 255 / np.max(dn)
+		depth = Image.fromarray(np.uint8(dn))
 		
 		fig, ax = plt.subplots(1, 2, figsize=fig_size)
 		ax[0].imshow(color)
