@@ -10,6 +10,8 @@ University : Politecnico di Milano - A.Y. 2021/2022
 """
 import cv2
 
+from camera.Frame import Frame
+
 
 class Matcher:
     """ Class implementing the tool 'Matcher' able to match relevant
@@ -98,32 +100,30 @@ class Matcher:
             pass
 
     def match(self,
-              descriptors_1,
-              descriptors_2):
+              img_1: Frame,
+              img_2: Frame):
         """ Merge the behaviour of all possible core techniques in one function
         in purpose of matching descriptors of the two images.
 
-        :param descriptors_1:
-            Feature descriptors of the first image.
-        :type descriptors_1: object
+        :param img_1:
+            First image.
+        :type img_1: Frame
 
-        :param descriptors_2:
-            Feature descriptors of the second image.
-        :type descriptors_2: object
+        :param img_2:
+            Second image.
+        :type img_2: Frame
 
         :return:
             Good matches which passed the Lowe's test.
         :rtype: list
         """
-        matches = self.core.knnMatch(descriptors_1, descriptors_2, k=2)
+        matches = self.core.knnMatch(img_1.descriptors, img_2.descriptors, k=2)
         matches = [x for x in matches if len(x) == 2]
         return self._filter(matches, self.filter_test)
 
     @staticmethod
-    def draw_matches(img_1,  # : Frame
-                     key_points_1,
-                     img_2,  # : Frame
-                     key_points_2,
+    def draw_matches(img_1: Frame,
+                     img_2: Frame,
                      matches,
                      limit=-1):
         """ Private static method to be used to draw the final result of the
@@ -133,17 +133,9 @@ class Matcher:
             First image.
         :type img_1: Frame
 
-        :param key_points_1:
-            Key points of the first image, i.e. the features.
-        :type key_points_1: list
-
         :param img_2:
             Second image.
         :type img_2: Frame
-
-        :param key_points_2:
-            Key points of the second image, i.e. the features.
-        :type key_points_2: list
 
         :param matches:
             Matched features.
@@ -158,7 +150,7 @@ class Matcher:
         :rtype: image
         """
         # pre-conditions
-        assert img_1.shape == img_2.shape
+        assert img_1.get_size() == img_2.get_size()
 
         # hyper-parameters before drawing
         draw_params = dict(matchColor=-1,  # draw matches in green color
@@ -167,9 +159,12 @@ class Matcher:
                            flags=2)
 
         # proper drawing method
-        final_img = cv2.drawMatches(img_1, key_points_1,
-                                    img_2, key_points_2,
+        final_img = cv2.drawMatches(img_1.get_cv2_images(ret="rgb"),
+                                    img_1.key_points,
+                                    img_2.get_cv2_images(ret="rgb"),
+                                    img_2.key_points,
                                     matches[:limit],
                                     None, **draw_params)
 
-        return cv2.resize(final_img, (img_1.shape[1] * 2, img_1.shape[0]))
+        width, height = img_1.get_size()
+        return cv2.resize(final_img, (width * 2, height))

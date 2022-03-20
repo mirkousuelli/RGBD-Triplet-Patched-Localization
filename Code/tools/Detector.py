@@ -10,6 +10,8 @@ University : Politecnico di Milano - A.Y. 2021/2022
 """
 import cv2
 
+from camera.Frame import Frame
+
 
 class Detector:
     """ Class implementing the tool 'Detector' able to detect relevant
@@ -48,7 +50,7 @@ class Detector:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _preprocess(img):  # : Frame
+    def _preprocess(img: Frame):
         """ Private static method useful to preprocess the image in grayscale
         and in a built-in way within the class.
 
@@ -60,14 +62,11 @@ class Detector:
             Grayscale image.
         :rtype: image
         """
-        # checking that the image has more than one channel
-        assert img.shape[2] > 1
-
         # returning it back to grayscale
-        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        return cv2.cvtColor(img.get_cv2_images(ret="rgb"), cv2.COLOR_BGR2GRAY)
 
     def detect_and_compute(self,
-                           img):  # : Frame
+                           img: Frame):
         """ Merge the behaviour of all possible core techniques in one function
         in purpose of detecting and computing features.
 
@@ -79,5 +78,5 @@ class Detector:
             Key-points and Descriptors
         :rtype: Tuple[object, object]
         """
-        # before the proper detection it is needed a grayscale preprocess
-        return self.core.detectAndCompute(self._preprocess(img), None)
+        img.key_points, img.descriptors = self.core.detectAndCompute(
+            self._preprocess(img), None)

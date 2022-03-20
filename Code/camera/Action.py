@@ -15,3 +15,10 @@ class Action(ProjectObject):
 		super().__init__()
 		self.first = first
 		self.second = second
+		self.matches = None
+
+	def set_matches(self, matches):
+		self.matches = matches
+
+	def get_matches(self):
+		return self.matches

@@ -38,8 +38,7 @@ class Merger:
 		:type matcher_method: str
 		"""
 		# Detector initialization
-		self.detector = Detector(num_features,
-		                         detector_method)
+		self.detector = Detector(num_features, detector_method)
 
 		# the algorithm changes based on the technique adopted
 		algorithm = 0 if detector_method == "SIFT" else 6
@@ -51,8 +50,8 @@ class Merger:
 		                       filter_test=0.7)
 
 	def merge(self,
-	          img_1,  # : Frame
-	          img_2,  # : Frame
+	          img_1: Frame,
+	          img_2: Frame,
 	          limit=-1):
 		""" Merge two images by first detecting their features and then matching
 		their descriptors all at once.
@@ -73,10 +72,8 @@ class Merger:
 			The two images merged into one image with matching links drawn.
 		:rtype: image
 		"""
-		key_points_1, descriptors_1 = self.detector.detect_and_compute(img_1)
-		key_points_2, descriptors_2 = self.detector.detect_and_compute(img_2)
+		self.detector.detect_and_compute(img_1)
+		self.detector.detect_and_compute(img_2)
 
-		matches = self.matcher.match(descriptors_1, descriptors_2)
-		return self.matcher.draw_matches(img_1, key_points_1,
-		                                 img_2, key_points_2,
-		                                 matches, limit=limit)
+		matches = self.matcher.match(img_1, img_2)
+		return self.matcher.draw_matches(img_1, img_2, matches, limit=limit)
