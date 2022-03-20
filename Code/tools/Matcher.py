@@ -11,7 +11,7 @@ University : Politecnico di Milano - A.Y. 2021/2022
 import cv2
 
 from camera.Frame import Frame
-
+from camera.Action import Action
 
 class Matcher:
     """ Class implementing the tool 'Matcher' able to match relevant
@@ -99,9 +99,9 @@ class Matcher:
             print('\033[91m' + 'Filter matching error' + '\033[0m')
             pass
 
-    def match(self,
-              img_1: Frame,
-              img_2: Frame):
+    def match_frames(self,
+                     img_1: Frame,
+                     img_2: Frame):
         """ Merge the behaviour of all possible core techniques in one function
         in purpose of matching descriptors of the two images.
 
@@ -121,11 +121,30 @@ class Matcher:
         matches = [x for x in matches if len(x) == 2]
         return self._filter(matches, self.filter_test)
 
+    def match_action(self,
+                     action: Action):
+        """ Merge the behaviour of all possible core techniques in one function
+        in purpose of matching descriptors of the two images.
+
+        :param action:
+            Action of two frames.
+        :type action: Action
+
+        :return:
+            Good matches which passed the Lowe's test.
+        :rtype: list
+        """
+        action.matches = self.core.knnMatch(action.first.descriptors,
+                                     action.second.descriptors,
+                                     k=2)
+        action.matches = [x for x in action.matches if len(x) == 2]
+        action.matches = self._filter(action.matches, self.filter_test)
+
     @staticmethod
-    def draw_matches(img_1: Frame,
-                     img_2: Frame,
-                     matches,
-                     limit=-1):
+    def draw_frames_matches(img_1: Frame,
+                            img_2: Frame,
+                            matches,
+                            limit=-1):
         """ Private static method to be used to draw the final result of the
         matching procedure.
 
@@ -167,4 +186,42 @@ class Matcher:
                                     None, **draw_params)
 
         width, height = img_1.get_size()
+        return cv2.resize(final_img, (width * 2, height))
+
+    @staticmethod
+    def draw_action_matches(action: Action,
+                            limit=-1):
+        """ Private static method to be used to draw the final result of the
+        matching procedure.
+
+        :param action:
+            Action of two frames.
+        :type action: Action
+
+        :param limit:
+            Integer number which limits how many matching links to be drawn.
+        :type limit: int
+
+        :return:
+            The two images merged into one image with matching links drawn.
+        :rtype: image
+        """
+        # pre-conditions
+        assert action.first.get_size() == action.second.get_size()
+
+        # hyper-parameters before drawing
+        draw_params = dict(matchColor=-1,  # draw matches in green color
+                           singlePointColor=None,
+                           matchesMask=None,  # draw only inliers
+                           flags=2)
+
+        # proper drawing method
+        final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
+                                    action.first.key_points,
+                                    action.second.get_cv2_images(ret="rgb"),
+                                    action.second.key_points,
+                                    action.matches[:limit],
+                                    None, **draw_params)
+
+        width, height = action.first.get_size()
         return cv2.resize(final_img, (width * 2, height))

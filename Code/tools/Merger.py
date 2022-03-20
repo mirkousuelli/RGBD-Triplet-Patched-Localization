@@ -9,6 +9,7 @@ Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
 from camera.Frame import Frame
+from camera.Action import Action
 from tools.Detector import Detector
 from tools.Matcher import Matcher
 
@@ -49,10 +50,10 @@ class Merger:
 		                       search_algorithm=algorithm,
 		                       filter_test=0.7)
 
-	def merge(self,
-	          img_1: Frame,
-	          img_2: Frame,
-	          limit=-1):
+	def merge_frames(self,
+	                 img_1: Frame,
+	                 img_2: Frame,
+	                 limit=-1):
 		""" Merge two images by first detecting their features and then matching
 		their descriptors all at once.
 
@@ -75,5 +76,31 @@ class Merger:
 		self.detector.detect_and_compute(img_1)
 		self.detector.detect_and_compute(img_2)
 
-		matches = self.matcher.match(img_1, img_2)
-		return self.matcher.draw_matches(img_1, img_2, matches, limit=limit)
+		matches = self.matcher.match_frames(img_1, img_2)
+		return self.matcher.draw_frames_matches(img_1, img_2, matches, limit=limit)
+
+	def merge_action(self,
+	                 action: Action,
+	                 limit=-1):
+		""" Merge two images by first detecting their features and then matching
+		their descriptors all at once.
+
+		:param action:
+			Action of two frame.
+		:type action: Action
+
+		:param limit:
+			Integer number which limits how many matching links to be drawn.
+		:type limit: int
+
+		:return:
+			The two images merged into one image with matching links drawn.
+		:rtype: image
+		"""
+		if action.first.key_points is None or action.first.descriptors is None:
+			self.detector.detect_and_compute(action.first)
+		if action.second.key_points is None or action.second.descriptors is None:
+			self.detector.detect_and_compute(action.second)
+
+		self.matcher.match_action(action)
+		return self.matcher.draw_action_matches(action, limit=limit)
