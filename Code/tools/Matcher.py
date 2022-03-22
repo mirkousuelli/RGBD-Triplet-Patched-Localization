@@ -9,6 +9,7 @@ Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
 import cv2
+import numpy as np
 
 from camera.Frame import Frame
 from camera.Action import Action
@@ -70,7 +71,9 @@ class Matcher:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _filter(matches,
+    def _filter(img_1: Frame,
+                img_2: Frame,
+                matches,
                 filter_test):
         """ Private static method useful to filter the images matching in a
         built-in way within the class.
@@ -93,7 +96,11 @@ class Matcher:
             for m, n in matches:
                 # Lowe's test
                 if m.distance < filter_test * n.distance:
+                    img_1.points.append(img_1.key_points[m.queryIdx].pt)
+                    img_2.points.append(img_2.key_points[m.trainIdx].pt)
                     good.append(m)
+            img_1.points = np.int32(img_1.points)
+            img_2.points = np.int32(img_2.points)
             return good
         except ValueError:
             print('\033[91m' + 'Filter matching error' + '\033[0m')
@@ -119,7 +126,7 @@ class Matcher:
         """
         matches = self.core.knnMatch(img_1.descriptors, img_2.descriptors, k=2)
         matches = [x for x in matches if len(x) == 2]
-        return self._filter(matches, self.filter_test)
+        return self._filter(img_1, img_2, matches, self.filter_test)
 
     def match_action(self,
                      action: Action):
@@ -138,7 +145,8 @@ class Matcher:
                                             action.second.descriptors,
                                             k=2)
         action.links = [x for x in action.matches if len(x) == 2]
-        action.links = self._filter(action.links, self.filter_test)
+        action.links = self._filter(action.first, action.second,
+                                    action.links, self.filter_test)
 
     @staticmethod
     def draw_frames_matches(img_1: Frame,

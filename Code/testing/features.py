@@ -14,7 +14,7 @@ img_2 = Frame("../../Dataset/Colors/00060-color.png",
 action = Action(img_1, img_2)
 
 # objects initialization
-merger = Merger(num_features=2000,
+merger = Merger(num_features=5000,
                 detector_method="ORB",
                 matcher_method="FLANN")
 
@@ -22,5 +22,5 @@ localizer = Localizer()
 
 # Show the final image
 cv2.imshow("Matches", merger.merge_action(action))
-print(localizer.fundamental_matrix(action))
+cv2.imshow("EpiLines", localizer.show_epipolar_lines(action))
 cv2.waitKey()

@@ -19,3 +19,4 @@ class Action(ProjectObject):
 		self.second = second
 		self.matches = None
 		self.links = None
+		self.f_matrix = None

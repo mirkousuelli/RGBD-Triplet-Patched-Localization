@@ -25,6 +25,9 @@ class Frame(ProjectObject):
 		self.__index = img_index
 		self.key_points = None
 		self.descriptors = None
+		self.epi_lines = None
+		self.points = []
+		self.inliers = []
 
 	def extract_pose(self) -> np.ndarray:
 		"""Get the pose of the image from the paths.
