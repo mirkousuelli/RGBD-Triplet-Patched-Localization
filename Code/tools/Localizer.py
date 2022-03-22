@@ -16,6 +16,9 @@ from camera.Frame import Frame
 
 
 class Localizer:
+	"""
+
+	"""
 	RANSAC_THRESHOLD_PIXEL = 0.1
 	RANSAC_PROB = 0.999
 	RANSAC_ITER = 10000
@@ -25,6 +28,11 @@ class Localizer:
 
 	@staticmethod
 	def fundamental_matrix(action: Action):
+		"""
+
+		:param action:
+		:return:
+		"""
 		assert len(action.first.points) == len(action.second.points)
 
 		F, mask = cv2.findFundamentalMat(

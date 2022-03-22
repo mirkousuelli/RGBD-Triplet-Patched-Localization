@@ -77,7 +77,8 @@ class Merger:
 		self.detector.detect_and_compute(img_2)
 
 		matches = self.matcher.match_frames(img_1, img_2)
-		return self.matcher.draw_frames_matches(img_1, img_2, matches, limit=limit)
+		return self.matcher.draw_frames_matches(img_1, img_2,
+		                                        matches, limit=limit)
 
 	def merge_action(self,
 	                 action: Action,
