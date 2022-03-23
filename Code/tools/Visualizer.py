@@ -74,16 +74,17 @@ class Visualizer(ProjectObject):
 
 	def plot_image_and_depth(self, color_scale: str = 'b',
 							 fig_size: Tuple = (8,4)) -> None:
-		"""This method plots RGB image aside the depth image.
+		"""This method plots RGB image aside the depth image of the frame.
 		
-		Parameters
-		----------
-		color_scale : {'r', 'g', 'b'}
-			It is a character representing the color scale used to print the
-			depth image.
+		:param str color_scale:
+			{'r', 'g', 'b'} It is a character representing the color scale used
+			to print the depth image.
 		
-		fig_size : Tuple
+		:param Tuple fig_size:
 			It is the dimension of the figure on which the image is plotted.
+			
+		:return:
+			None
 		"""
 		if color_scale not in ['b', 'g', 'r']:
 			raise ValueError(self._raise_error("rgb_colors"))
@@ -104,13 +105,15 @@ class Visualizer(ProjectObject):
 		fig.show()
 
 	@staticmethod
-	def _get_frame_point_cloud(frame: Frame):
+	def _get_frame_point_cloud(frame: Frame) -> o3d.geometry.PointCloud:
 		"""Return transformed point cloud of the frame.
 		
-		:param frame:
+		:param Frame frame:
 			The frame from which we want the point cloud.
 		:return:
 			The point cloud rotated with the pose of the frame.
+		:rtype:
+			o3d.geometry.PointCloud
 		"""
 		# Get the rgbd image
 		rgbd_image = frame.get_rgbd_image()
