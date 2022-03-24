@@ -74,16 +74,17 @@ class Visualizer(ProjectObject):
 
 	def plot_image_and_depth(self, color_scale: str = 'b',
 							 fig_size: Tuple = (8,4)) -> None:
-		"""This method plots RGB image aside the depth image.
+		"""This method plots RGB image aside the depth image of the frame.
 		
-		Parameters
-		----------
-		color_scale : {'r', 'g', 'b'}
-			It is a character representing the color scale used to print the
-			depth image.
+		:param str color_scale:
+			{'r', 'g', 'b'} It is a character representing the color scale used
+			to print the depth image.
 		
-		fig_size : Tuple
+		:param Tuple fig_size:
 			It is the dimension of the figure on which the image is plotted.
+			
+		:return:
+			None
 		"""
 		if color_scale not in ['b', 'g', 'r']:
 			raise ValueError(self._raise_error("rgb_colors"))
@@ -104,13 +105,15 @@ class Visualizer(ProjectObject):
 		fig.show()
 
 	@staticmethod
-	def _get_frame_point_cloud(frame: Frame):
+	def _get_frame_point_cloud(frame: Frame) -> o3d.geometry.PointCloud:
 		"""Return transformed point cloud of the frame.
 		
-		:param frame:
+		:param Frame frame:
 			The frame from which we want the point cloud.
 		:return:
 			The point cloud rotated with the pose of the frame.
+		:rtype:
+			o3d.geometry.PointCloud
 		"""
 		# Get the rgbd image
 		rgbd_image = frame.get_rgbd_image()
@@ -122,11 +125,14 @@ class Visualizer(ProjectObject):
 		# Transform the image using the pose of the camera
 		frame_pose = frame.extract_pose()
 		quaternions = frame_pose[0:4]
-		position = frame_pose[4:7]
+		position = frame_pose[4:7] * np.array([0.3, 0.5, 0.5])
 		rotation = PointCloud.get_rotation_matrix_from_quaternion(quaternions)
-		pcd.rotate(rotation)
-		pcd.translate(position)
-		return pcd
+		
+		result = pcd
+		result = result.translate(position)
+		#rotation = np.linalg.inv(rotation)
+		result = result.rotate(rotation)
+		return result
 
 	def plot_frame_point_cloud(self, camera_pos = None) -> None:
 		"""Plot the point cloud from the frame and the camera if it is passed.
@@ -146,7 +152,9 @@ class Visualizer(ProjectObject):
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
-	def plot_action_point_cloud(self, camera_pos = None) -> None:
+	def plot_action_point_cloud(self, color1: np.ndarray = None,
+								color2: np.ndarray = None,
+								camera_pos = None) -> None:
 		"""Plot the point cloud from the action and the camera if it is passed
 		
 		:param camera_pos:
@@ -156,16 +164,35 @@ class Visualizer(ProjectObject):
 			None
 		"""
 		frame_1_point_cloud = self._get_frame_point_cloud(self.action.first)
+		if color1 is not None:
+			frame_1_point_cloud.paint_uniform_color(color1)
 		frame_2_point_cloud = self._get_frame_point_cloud(self.action.second)
+		if color2 is not None:
+			frame_2_point_cloud.paint_uniform_color(color2)
 		
 		# View the images
 		vis = o3d.visualization.Visualizer()
 		vis.create_window()
-		vis.add_geometry(frame_1_point_cloud)
-		vis.add_geometry(frame_2_point_cloud)
+		new_cloud = frame_1_point_cloud + frame_2_point_cloud
+		vis.add_geometry(new_cloud)
+		#vis.add_geometry(frame_2_point_cloud)
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
 	def plot_recording_point_cloud(self) -> None:
-		pass
-	
+		"""Plots the point cloud from the recording.
+		
+		:return:
+			None
+		"""
+		# View the images
+		vis = o3d.visualization.Visualizer()
+		vis.create_window()
+		
+		frames = self.recording.get_all_frames()
+		for frame in frames:
+			geometry = self._get_frame_point_cloud(frame)
+			vis.add_geometry(geometry)
+		
+		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
+		vis.run()
