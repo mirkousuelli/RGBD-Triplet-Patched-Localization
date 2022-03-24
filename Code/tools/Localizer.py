@@ -27,13 +27,15 @@ class Localizer:
 		return
 
 	@staticmethod
-	def fundamental_matrix(action: Action):
+	def compute_fundamental_matrix(action: Action):
 		"""
 
 		:param action:
 		:return:
 		"""
-		assert len(action.first.points) == len(action.second.points)
+		assert len(action.first.points) == len(action.second.points), \
+			"Frames features array have different size!"
+		assert len(action.first.points) > 0, "Features array is empty!"
 
 		F, mask = cv2.findFundamentalMat(
 			action.first.points,
@@ -44,10 +46,6 @@ class Localizer:
 			maxIters=Localizer.RANSAC_ITER
 		)
 
-		# We select only inlier points
-		action.first.inliers = action.first.points[mask.ravel() == 1]
-		action.second.inliers = action.second.points[mask.ravel() == 1]
-
 		if F is None or F.shape == (1, 1):
 			# no fundamental matrix found
 			raise Exception('No fundamental matrix found')
@@ -55,9 +53,31 @@ class Localizer:
 			# more than one matrix found, just pick the first
 			F = F[0:3, 0:3]
 
-		action.f_matrix = F
+		action.f_matrix = np.mat(F)
+		action.f_mask = mask
 
 		return np.matrix(F)
+
+	@staticmethod
+	def compute_inliers(action: Action):
+		assert len(action.first.points) == len(action.second.points), \
+			"Frames features array have different size!"
+		assert len(action.first.points) > 0, "Features array is empty!"
+		assert action.f_mask is not None, "You must compute the Fundamental " \
+		                                  "Matrix before!"
+
+		# We select only inlier points
+		action.first.inliers = action.first.points[action.f_mask.ravel() == 1]
+		action.second.inliers = action.second.points[action.f_mask.ravel() == 1]
+
+	@staticmethod
+	def compute_essential_matrix(action: Action):
+		assert action.f_matrix is not None, "You must compute the " \
+		                                    "Fundamental Matrix before!"
+
+		action.e_matrix = action.second.calibration_matrix().T \
+		                  @ action.f_matrix @ action.first.calibration_matrix()
+		return action.e_matrix
 
 	@staticmethod
 	def compute_epipolar_lines(action: Action):
@@ -66,8 +86,8 @@ class Localizer:
 		:param action:
 		:return:
 		"""
-		if action.f_matrix is None:
-			Localizer.fundamental_matrix(action)
+		assert action.f_matrix is not None, "You must compute the " \
+		                                    "Fundamental Matrix before!"
 
 		action.first.epi_lines = cv2.computeCorrespondEpilines(
 			action.second.inliers.reshape(-1, 1, 2), 2, action.f_matrix)
@@ -110,11 +130,59 @@ class Localizer:
 		:param action:
 		:return:
 		"""
-		if action.first.epi_lines is None or action.second.epi_lines is None:
-			Localizer.compute_epipolar_lines(action)
+		assert action.first.epi_lines is not None \
+		       and action.second.epi_lines is not None, "You must compute the " \
+		                                                "Epipolar Lines before!"
 
 		img_1 = Localizer.__draw_epipolar_lines(action.first, action.second)
 		img_2 = Localizer.__draw_epipolar_lines(action.second, action.first)
 
 		final_img = np.concatenate((img_1, img_2), axis=1)
 		return final_img
+
+	@staticmethod
+	def roto_translation(action: Action):
+		w, u, vt = cv2.SVDecomp(action.e_matrix)
+		if np.linalg.det(u) < 0:
+			u *= -1.0
+		if np.linalg.det(vt) < 0:
+			vt *= -1.0
+		W = np.mat([[0, -1, 0],
+		            [1, 0, 0],
+		            [0, 0, 1]], dtype=float)
+		action.R = np.mat(u) * W * np.mat(vt)
+		action.t = u[:, 2]
+
+		return action.R, action.t
+
+	@staticmethod
+	def get_quaternions(action: Action):
+		R = action.R
+		trace = sum(R[i, i] for i in range(3))
+		Q = [0] * 4
+
+		if trace > 0.0:
+			s = np.sqrt(trace + 1.0)
+			Q[3] = s * 0.5
+			s = 0.5 / s
+			Q[0] = (R[2, 1] - R[1, 2]) * s
+			Q[1] = (R[0, 2] - R[2, 0]) * s
+			Q[2] = (R[1, 0] - R[0, 1]) * s
+		else:
+			if R[0, 0] < R[1, 1]:
+				i = 2 if R[1, 1] < R[2, 2] else 1
+			else:
+				i = 2 if R[0, 0] < R[2, 2] else 0
+
+			j = (i + 1) % 3
+			k = (i + 2) % 3
+
+			s = np.sqrt(R[i, i] - R[j, j] - R[k, k] + 1.0)
+			Q[i] = s * 0.5
+			s = 0.5 / s
+
+			Q[3] = (R[k, j] - R[j, k]) * s
+			Q[j] = (R[j, i] - R[i, j]) * s
+			Q[k] = (R[k, i] - R[i, k]) * s
+
+		return np.array(Q)

@@ -15,8 +15,24 @@ class Action(ProjectObject):
 	             first: Frame,
 	             second: Frame):
 		super().__init__()
+
+		# Frames
 		self.first = first
 		self.second = second
+
+		# Matches
 		self.matches = None
 		self.links = None
+
+		# Fundamental Matrix
 		self.f_matrix = None
+
+		# Inliers mask
+		self.f_mask = None
+
+		# Essential Matrix
+		self.e_matrix = None
+
+		# Roto-Translation
+		self.R = None
+		self.t = None

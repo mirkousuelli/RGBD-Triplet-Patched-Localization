@@ -177,7 +177,8 @@ class Matcher:
         :rtype: image
         """
         # pre-conditions
-        assert img_1.get_size() == img_2.get_size()
+        assert img_1.get_size() == img_2.get_size(), "Images do not have the" \
+                                                     " same size!"
 
         # hyper-parameters before drawing
         draw_params = dict(matchColor=-1,  # draw matches in green color
@@ -228,6 +229,29 @@ class Matcher:
                                     action.first.key_points,
                                     action.second.get_cv2_images(ret="rgb"),
                                     action.second.key_points,
+                                    action.links[:limit],
+                                    None, **draw_params)
+
+        width, height = action.first.get_size()
+        return cv2.resize(final_img, (width * 2, height))
+
+    @staticmethod
+    def draw_inliers_matches(action: Action):
+
+        # pre-conditions
+        assert action.first.get_size() == action.second.get_size()
+
+        # hyper-parameters before drawing
+        draw_params = dict(matchColor=-1,  # draw matches in green color
+                           singlePointColor=None,
+                           matchesMask=None,  # draw only inliers
+                           flags=2)
+
+        # proper drawing method
+        final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
+                                    action.first.inliers,
+                                    action.second.get_cv2_images(ret="rgb"),
+                                    action.second.inliers,
                                     action.links[:limit],
                                     None, **draw_params)
 

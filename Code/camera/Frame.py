@@ -29,6 +29,12 @@ class Frame(ProjectObject):
 		self.points = []
 		self.inliers = []
 
+		# Kinect v1 intrinsic parameters
+		self.fx = 522.259
+		self.fy = 523.419
+		self.Cx = 330.18
+		self.Cy = 254.437
+
 	def extract_pose(self) -> np.ndarray:
 		"""Get the pose of the image from the paths.
 		
@@ -110,3 +116,8 @@ class Frame(ProjectObject):
 	def get_size(self):
 		with Image.open(self.__color_path) as img:
 			return img.size
+
+	def calibration_matrix(self):
+		return np.mat([[self.fx, 0, self.Cx],
+		               [0, self.fy, self.Cy],
+		               [0, 0, 1]])

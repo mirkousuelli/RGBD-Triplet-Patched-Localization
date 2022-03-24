@@ -17,10 +17,24 @@ action = Action(img_1, img_2)
 merger = Merger(num_features=5000,
                 detector_method="ORB",
                 matcher_method="FLANN")
-
 localizer = Localizer()
 
+merge_image = merger.merge_action(action)
+
+print("F = ")
+print(localizer.compute_fundamental_matrix(action))
+print("\n")
+print("E = ")
+print(localizer.compute_essential_matrix(action))
+print("\n")
+print("R, t = ")
+print(localizer.roto_translation(action))
+
+localizer.compute_inliers(action)
+localizer.compute_epipolar_lines(action)
+epi_image = localizer.show_epipolar_lines(action)
+
 # Show the final image
-cv2.imshow("Matches", merger.merge_action(action))
-cv2.imshow("EpiLines", localizer.show_epipolar_lines(action))
+cv2.imshow("Matches", merge_image)
+cv2.imshow("EpiLines", epi_image)
 cv2.waitKey()

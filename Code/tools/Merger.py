@@ -105,3 +105,11 @@ class Merger:
 
 		self.matcher.match_action(action)
 		return self.matcher.draw_action_matches(action, limit=limit)
+
+	def merge_inliers(self,
+	                  action: Action):
+		assert action.first.inliers is not None and\
+		       action.second.inliers is not None, "RANSAC has not been applied!"
+
+		return self.matcher.draw_action_inliers(action)
+
