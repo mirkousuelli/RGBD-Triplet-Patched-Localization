@@ -29,35 +29,6 @@ PinholeCameraIntrinsic = o3d.camera.PinholeCameraIntrinsic
 RGBDImage = o3d.geometry.RGBDImage
 PrimeSenseDefault = o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault
 PointCloud = o3d.geometry.PointCloud
-
-# TODO: this is the 4x4 version of a quaternion, is it useful?
-def get_quaternion_transform(quat: np.ndarray):
-	identity = np.array([[1, 0, 0, 0],
-						 [0, 1, 0, 0],
-						 [0, 0, 1, 0],
-						 [0, 0, 0, 1]])
-	H = np.array([[0, 1, 0, 0],
-				  [-1, 0, 0, 0],
-				  [0, 0, 0, -1],
-				  [0, 0, 1, 0]])
-	J = np.array([[0, 0, 1, 0],
-				  [0, 0, 0, 1],
-				  [-1, 0, 0, 0],
-				  [0,-1, 0, 0]])
-	K = np.array([[0, 0, 0, 1],
-				  [0, 0, -1, 0],
-				  [0, 1, 0, 0],
-				  [-1, 0, 0, 0]])
-	quat_matrix = quat[0] * identity + quat[1] * H + quat[2] * J + quat[3] * K
-	return quat_matrix
-
-# TODO: this is the 4x4 version of a translation, is it useful?
-def get_translation_transform(vec: np.ndarray):
-	translation = np.array([[0, 0, 0, vec[0]],
-							[0, 0, 0, vec[1]],
-							[0, 0, 0, vec[2]],
-							[0, 0, 0, 1]])
-	return translation
 	
 
 class Visualizer(ProjectObject):
@@ -71,6 +42,33 @@ class Visualizer(ProjectObject):
 		self.frame = frame
 		self.action = action
 		self.recording = recording
+
+	def _get_pc_color_scale(self, cloud: o3d.geometry.PointCloud,
+							scale: str = "r") -> None:
+		"""Perform color scaling on an open3d point cloud.
+
+		:param cloud:
+			The point cloud on which the colors must be scaled.
+		:param scale:
+			The color on which the colors must be scaled.
+		:return:
+			None.
+		"""
+		if scale not in ["r", "g", "b"]:
+			raise ValueError("Only RGB supported. Funny huh?!")
+
+		colors = np.asarray(cloud.colors)
+		for i in range(colors.shape[0]):
+			new_scale = 0.2126 * colors[i, 0] + 0.7152 * colors[i, 1] + 0.0722 * colors[i, 2]
+			cloud.colors[i][0] = 0
+			cloud.colors[i][1] = 0
+			cloud.colors[i][2] = 0
+			if scale == "r":
+				cloud.colors[i][0] = new_scale
+			elif scale == "g":
+				cloud.colors[i][1] = new_scale
+			else:
+				cloud.colors[i][2] = new_scale
 
 	def plot_image_and_depth(self, color_scale: str = 'b',
 							 fig_size: Tuple = (8,4)) -> None:
@@ -134,7 +132,7 @@ class Visualizer(ProjectObject):
 		result = result.rotate(rotation)
 		return result
 
-	def plot_frame_point_cloud(self, camera_pos = None) -> None:
+	def plot_frame_point_cloud(self) -> None:
 		"""Plot the point cloud from the frame and the camera if it is passed.
 		
 		:param camera_pos:
@@ -152,8 +150,8 @@ class Visualizer(ProjectObject):
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
-	def plot_action_point_cloud(self, color1: np.ndarray = None,
-								color2: np.ndarray = None,
+	def plot_action_point_cloud(self, color1: str = None,
+								color2: str = None,
 								camera_pos = None) -> None:
 		"""Plot the point cloud from the action and the camera if it is passed
 		
@@ -165,10 +163,11 @@ class Visualizer(ProjectObject):
 		"""
 		frame_1_point_cloud = self._get_frame_point_cloud(self.action.first)
 		if color1 is not None:
-			frame_1_point_cloud.paint_uniform_color(color1)
+			self._get_pc_color_scale(frame_1_point_cloud, color1)
+
 		frame_2_point_cloud = self._get_frame_point_cloud(self.action.second)
 		if color2 is not None:
-			frame_2_point_cloud.paint_uniform_color(color2)
+			self._get_pc_color_scale(frame_2_point_cloud, color2)
 		
 		# View the images
 		vis = o3d.visualization.Visualizer()

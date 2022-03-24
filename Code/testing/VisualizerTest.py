@@ -47,5 +47,5 @@ vw = Visualizer(frame1, action, recording)
 
 #vw.plot_image_and_depth()
 #vw.plot_frame_point_cloud()
-vw.plot_action_point_cloud()
+vw.plot_action_point_cloud(color1="g", color2="b")
 #vw.plot_recording_point_cloud()
