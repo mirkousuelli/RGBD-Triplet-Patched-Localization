@@ -44,31 +44,45 @@ class Visualizer(ProjectObject):
 		self.recording = recording
 
 	def _get_pc_color_scale(self, cloud: o3d.geometry.PointCloud,
-							scale: str = "r") -> None:
+							scale: np.ndarray = None) -> None:
 		"""Perform color scaling on an open3d point cloud.
 
 		:param cloud:
 			The point cloud on which the colors must be scaled.
+		
 		:param scale:
 			The color on which the colors must be scaled.
+		
 		:return:
 			None.
 		"""
-		if scale not in ["r", "g", "b"]:
-			raise ValueError("Only RGB supported. Funny huh?!")
+		if scale is None:
+			raise ValueError("You must pass a color")
+		elif scale.shape[0] != 3 or scale.ndim > 1:
+			raise ValueError("You must provide a (3,) ndarray.")
+
+		red_percentage = 0.0
+		green_percentage = 0.0
+		blue_percentage = 0.0
+		if scale[0] >= scale[1] and scale[0] >= scale[2]:
+			red_percentage = 1.0
+			green_percentage = scale[1] / scale[0]
+			blue_percentage = scale[2] / scale[0]
+		elif scale[1] >= scale[0] and scale[1] >= scale[2]:
+			red_percentage = scale[0] / scale[1]
+			green_percentage = 1.0
+			blue_percentage = scale[2] / scale[1]
+		elif scale[2] >= scale[0] and scale[2] >= scale[1]:
+			red_percentage = scale[0] / scale[2]
+			green_percentage = scale[1] / scale[2]
+			blue_percentage = 1.0
 
 		colors = np.asarray(cloud.colors)
 		for i in range(colors.shape[0]):
 			new_scale = 0.2126 * colors[i, 0] + 0.7152 * colors[i, 1] + 0.0722 * colors[i, 2]
-			cloud.colors[i][0] = 0
-			cloud.colors[i][1] = 0
-			cloud.colors[i][2] = 0
-			if scale == "r":
-				cloud.colors[i][0] = new_scale
-			elif scale == "g":
-				cloud.colors[i][1] = new_scale
-			else:
-				cloud.colors[i][2] = new_scale
+			cloud.colors[i][0] = new_scale * red_percentage
+			cloud.colors[i][1] = new_scale * green_percentage
+			cloud.colors[i][2] = new_scale * blue_percentage
 
 	def plot_image_and_depth(self, color_scale: str = 'b',
 							 fig_size: Tuple = (8,4)) -> None:
@@ -135,9 +149,6 @@ class Visualizer(ProjectObject):
 	def plot_frame_point_cloud(self) -> None:
 		"""Plot the point cloud from the frame and the camera if it is passed.
 		
-		:param camera_pos:
-			The position of the camera with respect to the frame.
-		
 		:return:
 			None
 		"""
@@ -150,13 +161,15 @@ class Visualizer(ProjectObject):
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
-	def plot_action_point_cloud(self, color1: str = None,
-								color2: str = None,
-								camera_pos = None) -> None:
+	def plot_action_point_cloud(self, color1: np.ndarray = None,
+								color2: np.ndarray = None) -> None:
 		"""Plot the point cloud from the action and the camera if it is passed
-		
-		:param camera_pos:
-			The position of the camera with respect to the frame.
+			
+		:param color1:
+			The colorscale to use to print the first frame.
+			
+		:param color2:
+			The colorscale to use to print the second frame.
 		
 		:return:
 			None
@@ -174,7 +187,6 @@ class Visualizer(ProjectObject):
 		vis.create_window()
 		new_cloud = frame_1_point_cloud + frame_2_point_cloud
 		vis.add_geometry(new_cloud)
-		#vis.add_geometry(frame_2_point_cloud)
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
