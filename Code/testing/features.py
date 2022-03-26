@@ -7,10 +7,10 @@ from tools.Merger import Merger
 from tools.Localizer import Localizer
 
 # image loading
-img_1 = Frame("../../Dataset/Colors/00060-color.png",
-              "../../Dataset/Depths/00060-depth.png", 0)
-img_2 = Frame("../../Dataset/Colors/00000-color.png",
-              "../../Dataset/Depths/00000-depth.png", 60)
+img_1 = Frame("../../Dataset/Colors/00000-color.png",
+              "../../Dataset/Depths/00000-depth.png", 0)
+img_2 = Frame("../../Dataset/Colors/00060-color.png",
+              "../../Dataset/Depths/00060-depth.png", 60)
 action = Action(img_1, img_2)
 
 # objects initialization
@@ -29,6 +29,12 @@ print(localizer.compute_essential_matrix(action))
 print("\n")
 print("R, t = ")
 print(localizer.roto_translation(action))
+print("\n")
+print("Q = ")
+print(localizer.from_rot_to_quat(action))
+print("\n")
+print("R* = ")
+print(localizer.from_quat_to_rot(localizer.from_rot_to_quat(action)))
 
 localizer.compute_inliers(action)
 localizer.compute_epipolar_lines(action)

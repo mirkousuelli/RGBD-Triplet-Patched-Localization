@@ -156,33 +156,63 @@ class Localizer:
 		return action.R, action.t
 
 	@staticmethod
-	def get_quaternions(action: Action):
+	def from_rot_to_quat(action: Action):
 		R = action.R
-		trace = sum(R[i, i] for i in range(3))
-		Q = [0] * 4
 
-		if trace > 0.0:
-			s = np.sqrt(trace + 1.0)
-			Q[3] = s * 0.5
-			s = 0.5 / s
-			Q[0] = (R[2, 1] - R[1, 2]) * s
-			Q[1] = (R[0, 2] - R[2, 0]) * s
-			Q[2] = (R[1, 0] - R[0, 1]) * s
-		else:
-			if R[0, 0] < R[1, 1]:
-				i = 2 if R[1, 1] < R[2, 2] else 1
-			else:
-				i = 2 if R[0, 0] < R[2, 2] else 0
+		q00 = R[0, 0] - R[1, 1] - R[2, 2]
+		q01 = R[1, 0] + R[0, 1]
+		q02 = R[2, 0] + R[0, 2]
+		q03 = R[2, 1] - R[1, 2]
 
-			j = (i + 1) % 3
-			k = (i + 2) % 3
+		q10 = q01
+		q11 = R[1, 1] - R[0, 0] - R[2, 2]
+		q12 = R[2, 1] + R[1, 2]
+		q13 = R[0, 2] - R[2, 0]
 
-			s = np.sqrt(R[i, i] - R[j, j] - R[k, k] + 1.0)
-			Q[i] = s * 0.5
-			s = 0.5 / s
+		q20 = q02
+		q21 = q12
+		q22 = R[2, 2] - R[0, 0] - R[1, 1]
+		q23 = R[1, 0] - R[0, 1]
 
-			Q[3] = (R[k, j] - R[j, k]) * s
-			Q[j] = (R[j, i] - R[i, j]) * s
-			Q[k] = (R[k, i] - R[i, k]) * s
+		q30 = q03
+		q31 = q13
+		q32 = q23
+		q33 = R[0, 0] + R[1, 1] + R[2, 2]
 
-		return np.array(Q)
+		Q = np.mat([[q00, q01, q02, q03],
+		            [q10, q11, q12, q13],
+		            [q20, q21, q22, q23],
+		            [q30, q31, q32, q33]], dtype=float) / 3
+
+		_, eig_vec = np.linalg.eigh(Q)
+
+		q = eig_vec[:, 3]
+
+		return np.array(np.concatenate((q[3].flatten().squeeze(),
+		                                q[0].flatten().squeeze(),
+		                                q[1].flatten().squeeze(),
+		                                q[2].flatten().squeeze()))).squeeze()
+
+	@staticmethod
+	def from_quat_to_rot(q):
+		s = sum(i ** 2 for i in q) ** (-2)
+
+		# First row of the rotation matrix
+		r00 = 1 - 2 * s * (q[2] ** 2 + q[3] ** 2)
+		r01 = 2 * s * (q[1] * q[2] - q[0] * q[3])
+		r02 = 2 * s * (q[1] * q[3] + q[0] * q[2])
+
+		# Second row of the rotation matrix
+		r10 = 2 * s * (q[1] * q[2] + q[0] * q[3])
+		r11 = 1 - 2 * s * (q[1] ** 2 + q[3] ** 2)
+		r12 = 2 * s * (q[2] * q[3] - q[0] * q[1])
+
+		# Third row of the rotation matrix
+		r20 = 2 * s * (q[1] * q[3] - q[0] * q[2])
+		r21 = 2 * s * (q[2] * q[3] + q[0] * q[1])
+		r22 = 1 - 2 * s * (q[1] ** 2 + q[2] ** 2)
+
+		# 3x3 rotation matrix
+		return np.mat([[r00, r01, r02],
+		               [r10, r11, r12],
+		               [r20, r21, r22]], dtype=float)
