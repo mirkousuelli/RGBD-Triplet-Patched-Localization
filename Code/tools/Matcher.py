@@ -149,6 +149,22 @@ class Matcher:
                                     action.links, self.filter_test)
 
     @staticmethod
+    def just_match(
+            desc_1,
+            desc_2,
+            method="FLANN"
+    ):
+        index_params = dict(algorithm=6,
+                            table_number=6,
+                            key_size=12,
+                            multi_probe_level=1)
+        search_params = dict(checks=desc_1.shape[1])
+        temp = cv2.FlannBasedMatcher(indexParams=index_params,
+                                     searchParams=search_params)
+
+        return temp.knnMatch(desc_1, desc_2, k=2)
+
+    @staticmethod
     def draw_frames_matches(img_1: Frame,
                             img_2: Frame,
                             matches,
@@ -236,7 +252,7 @@ class Matcher:
         return cv2.resize(final_img, (width * 2, height))
 
     @staticmethod
-    def draw_inliers_matches(action: Action):
+    def draw_inliers_matches(action: Action, limit=-1):
 
         # pre-conditions
         assert action.first.get_size() == action.second.get_size()
@@ -249,10 +265,10 @@ class Matcher:
 
         # proper drawing method
         final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
-                                    action.first.inliers,
+                                    action.first.key_points_inliers,
                                     action.second.get_cv2_images(ret="rgb"),
-                                    action.second.inliers,
-                                    action.links[:limit],
+                                    action.second.key_points_inliers,
+                                    action.links_inliers[:limit],
                                     None, **draw_params)
 
         width, height = action.first.get_size()

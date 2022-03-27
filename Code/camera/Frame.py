@@ -28,6 +28,8 @@ class Frame(ProjectObject):
 		self.epi_lines = None
 		self.points = []
 		self.inliers = []
+		self.key_points_inliers = []
+		self.descriptors_inliers = np.array([], dtype=np.uint8)
 
 		# Kinect v1 intrinsic parameters
 		self.fx = 522.259

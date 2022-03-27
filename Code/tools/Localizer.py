@@ -13,6 +13,7 @@ import cv2
 
 from camera.Action import Action
 from camera.Frame import Frame
+from tools.Matcher import Matcher
 
 
 class Localizer:
@@ -68,7 +69,48 @@ class Localizer:
 
 		# We select only inlier points
 		action.first.inliers = action.first.points[action.f_mask.ravel() == 1]
+		for inlier in action.first.inliers:
+			new_key_point = cv2.KeyPoint(int(inlier[0]), int(inlier[1]), 5)
+			action.first.key_points_inliers.append(new_key_point)
+			index = -1
+			for i in range(len(action.first.key_points)):
+				if action.first.key_points[i].pt == new_key_point.pt:
+					index = i
+					break
+			action.first.descriptors_inliers = np.append(
+				action.first.descriptors_inliers,
+				action.first.descriptors[index].copy()
+			).reshape(
+				(-1, action.first.descriptors.shape[1])
+			)
+		action.first.key_points_inliers = tuple(
+			action.first.key_points_inliers
+		)
+
+		# We select only inlier points
 		action.second.inliers = action.second.points[action.f_mask.ravel() == 1]
+		for inlier in action.second.inliers:
+			new_key_point = cv2.KeyPoint(int(inlier[0]), int(inlier[1]), 5)
+			action.second.key_points_inliers.append(new_key_point)
+			index = -1
+			for i in range(len(action.second.key_points)):
+				if action.second.key_points[i].pt == new_key_point.pt:
+					index = i
+					break
+			action.second.descriptors_inliers = np.append(
+				action.second.descriptors_inliers,
+				action.second.descriptors[index].copy()
+			).reshape(
+				(-1, action.second.descriptors.shape[1])
+			)
+		action.second.key_points_inliers = tuple(
+			action.second.key_points_inliers
+		)
+
+		action.links_inliers = Matcher.just_match(
+			action.first.descriptors_inliers,
+			action.second.descriptors_inliers
+		)
 
 	@staticmethod
 	def compute_essential_matrix(action: Action):

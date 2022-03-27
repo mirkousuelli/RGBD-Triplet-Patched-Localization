@@ -39,8 +39,10 @@ print(localizer.from_quat_to_rot(localizer.from_rot_to_quat(action)))
 localizer.compute_inliers(action)
 localizer.compute_epipolar_lines(action)
 epi_image = localizer.show_epipolar_lines(action)
+inliers_image = merger.merge_inliers(action)
 
 # Show the final image
 cv2.imshow("Matches", merge_image)
 cv2.imshow("EpiLines", epi_image)
+cv2.imshow("Inliers", inliers_image)
 cv2.waitKey()
