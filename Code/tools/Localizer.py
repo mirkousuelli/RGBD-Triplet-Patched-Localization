@@ -107,10 +107,14 @@ class Localizer:
 			action.second.key_points_inliers
 		)
 
-		action.links_inliers = Matcher.just_match(
-			action.first.descriptors_inliers,
-			action.second.descriptors_inliers
-		)
+		for i in range(len(action.links)):
+			if action.f_mask[i].ravel() == 1:
+				action.links_inliers.append(action.links[i])
+
+		#action.links_inliers = Matcher.just_match(
+		#	action.first.descriptors_inliers,
+		#	action.second.descriptors_inliers
+		#)
 
 	@staticmethod
 	def compute_essential_matrix(action: Action):

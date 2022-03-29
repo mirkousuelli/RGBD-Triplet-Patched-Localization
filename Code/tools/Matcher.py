@@ -14,6 +14,7 @@ import numpy as np
 from camera.Frame import Frame
 from camera.Action import Action
 
+
 class Matcher:
     """ Class implementing the tool 'Matcher' able to match relevant
     descriptors in an action, namely two images.
@@ -151,14 +152,13 @@ class Matcher:
     @staticmethod
     def just_match(
             desc_1,
-            desc_2,
-            method="FLANN"
+            desc_2
     ):
         index_params = dict(algorithm=6,
                             table_number=6,
                             key_size=12,
                             multi_probe_level=1)
-        search_params = dict(checks=desc_1.shape[1])
+        search_params = dict(checks=desc_1.shape[0])
         temp = cv2.FlannBasedMatcher(indexParams=index_params,
                                      searchParams=search_params)
 
@@ -265,9 +265,9 @@ class Matcher:
 
         # proper drawing method
         final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
-                                    action.first.key_points_inliers,
+                                    action.first.key_points,
                                     action.second.get_cv2_images(ret="rgb"),
-                                    action.second.key_points_inliers,
+                                    action.second.key_points,
                                     action.links_inliers[:limit],
                                     None, **draw_params)
 

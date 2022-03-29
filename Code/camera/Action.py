@@ -23,7 +23,7 @@ class Action(ProjectObject):
 		# Matches
 		self.matches = None
 		self.links = None
-		self.links_inliers = None
+		self.links_inliers = []
 
 		# Fundamental Matrix
 		self.f_matrix = None
