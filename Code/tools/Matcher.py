@@ -1,7 +1,7 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
---------------------------------------------------------------------------------
+-----------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
@@ -16,20 +16,23 @@ from camera.Action import Action
 
 
 class Matcher:
-    """ Class implementing the tool 'Matcher' able to match relevant
+    """
+    Class implementing the tool 'Matcher' able to match relevant
     descriptors in an action, namely two images.
     """
-
     # Techniques available:
     FLANN = 'FLANN'
     DNN = 'DNN'
 
-    def __init__(self,
-                 num_features,
-                 method,
-                 search_algorithm=6,
-                 filter_test=0.7):
-        """ Constructor.
+    def __init__(
+        self,
+        num_features,
+        method,
+        search_algorithm=6,
+        filter_test=0.7
+    ):
+        """
+        Constructor.
 
         :param num_features
             The number of features to be detected and matched afterwards.
@@ -72,11 +75,14 @@ class Matcher:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _filter(img_1: Frame,
-                img_2: Frame,
-                matches,
-                filter_test):
-        """ Private static method useful to filter the images matching in a
+    def _filter(
+        img_1: Frame,
+        img_2: Frame,
+        matches,
+        filter_test
+    ):
+        """
+        Private static method useful to filter the images matching in a
         built-in way within the class.
 
         :param matches:
@@ -107,10 +113,13 @@ class Matcher:
             print('\033[91m' + 'Filter matching error' + '\033[0m')
             pass
 
-    def match_frames(self,
-                     img_1: Frame,
-                     img_2: Frame):
-        """ Merge the behaviour of all possible core techniques in one function
+    def match_frames(
+        self,
+        img_1: Frame,
+        img_2: Frame
+    ):
+        """
+        Merge the behaviour of all possible core techniques in one function
         in purpose of matching descriptors of the two images.
 
         :param img_1:
@@ -129,9 +138,12 @@ class Matcher:
         matches = [x for x in matches if len(x) == 2]
         return self._filter(img_1, img_2, matches, self.filter_test)
 
-    def match_action(self,
-                     action: Action):
-        """ Merge the behaviour of all possible core techniques in one function
+    def match_action(
+        self,
+        action: Action
+    ):
+        """
+        Merge the behaviour of all possible core techniques in one function
         in purpose of matching descriptors of the two images.
 
         :param action:
@@ -150,26 +162,14 @@ class Matcher:
                                     action.links, self.filter_test)
 
     @staticmethod
-    def just_match(
-            desc_1,
-            desc_2
+    def draw_frames_matches(
+        img_1: Frame,
+        img_2: Frame,
+        matches,
+        limit=-1
     ):
-        index_params = dict(algorithm=6,
-                            table_number=6,
-                            key_size=12,
-                            multi_probe_level=1)
-        search_params = dict(checks=desc_1.shape[0])
-        temp = cv2.FlannBasedMatcher(indexParams=index_params,
-                                     searchParams=search_params)
-
-        return temp.knnMatch(desc_1, desc_2, k=2)
-
-    @staticmethod
-    def draw_frames_matches(img_1: Frame,
-                            img_2: Frame,
-                            matches,
-                            limit=-1):
-        """ Private static method to be used to draw the final result of the
+        """
+        Private static method to be used to draw the final result of the
         matching procedure.
 
         :param img_1:
@@ -190,7 +190,7 @@ class Matcher:
 
         :return:
             The two images merged into one image with matching links drawn.
-        :rtype: image
+        :rtype: cv2.Image
         """
         # pre-conditions
         assert img_1.get_size() == img_2.get_size(), "Images do not have the" \
@@ -214,10 +214,14 @@ class Matcher:
         return cv2.resize(final_img, (width * 2, height))
 
     @staticmethod
-    def draw_action_matches(action: Action,
-                            limit=-1):
-        """ Private static method to be used to draw the final result of the
-        matching procedure.
+    def draw_action_matches(
+        action: Action,
+        limit=-1,
+        inliers=False
+    ):
+        """
+        Private static method to be used to draw the final result of the
+        matching procedure with the option to draw the inliers.
 
         :param action:
             Action of two frames.
@@ -227,12 +231,20 @@ class Matcher:
             Integer number which limits how many matching links to be drawn.
         :type limit: int
 
+        :param inliers:
+            Choose if to draw matches just for the previously computed inliers.
+        :rtype inliers: bool
+
         :return:
             The two images merged into one image with matching links drawn.
-        :rtype: image
+        :rtype: cv2.Image
         """
         # pre-conditions
-        assert action.first.get_size() == action.second.get_size()
+        assert action.first.get_size() == action.second.get_size(), \
+            "Frames size mismatch!"
+        if inliers:
+            assert action.links_inliers is not None, \
+                "Compute the inliers before!"
 
         # hyper-parameters before drawing
         draw_params = dict(matchColor=-1,  # draw matches in green color
@@ -240,36 +252,18 @@ class Matcher:
                            matchesMask=None,  # draw only inliers
                            flags=2)
 
-        # proper drawing method
-        final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
-                                    action.first.key_points,
-                                    action.second.get_cv2_images(ret="rgb"),
-                                    action.second.key_points,
-                                    action.links[:limit],
-                                    None, **draw_params)
-
-        width, height = action.first.get_size()
-        return cv2.resize(final_img, (width * 2, height))
-
-    @staticmethod
-    def draw_inliers_matches(action: Action, limit=-1):
-
-        # pre-conditions
-        assert action.first.get_size() == action.second.get_size()
-
-        # hyper-parameters before drawing
-        draw_params = dict(matchColor=-1,  # draw matches in green color
-                           singlePointColor=None,
-                           matchesMask=None,  # draw only inliers
-                           flags=2)
+        # select the proper matching
+        matches = action.links_inliers[:limit] if inliers \
+            else action.links[:limit]
 
         # proper drawing method
         final_img = cv2.drawMatches(action.first.get_cv2_images(ret="rgb"),
                                     action.first.key_points,
                                     action.second.get_cv2_images(ret="rgb"),
                                     action.second.key_points,
-                                    action.links_inliers[:limit],
+                                    matches,
                                     None, **draw_params)
 
+        # returning the finale image collage with the drawn matches
         width, height = action.first.get_size()
         return cv2.resize(final_img, (width * 2, height))

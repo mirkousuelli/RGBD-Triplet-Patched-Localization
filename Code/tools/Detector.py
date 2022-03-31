@@ -1,7 +1,7 @@
 """
 Project : RGB-D Semantic Sampling
 Authors : Marco Petri and Mirko Usuelli
---------------------------------------------------------------------------------
+-----------------------------------------------
 Degree : M.Sc. Computer Science and Engineering
 Course : Image Analysis and Computer Vision
 Professor : Vincenzo Caglioti
@@ -14,19 +14,22 @@ from camera.Frame import Frame
 
 
 class Detector:
-    """ Class implementing the tool 'Detector' able to detect relevant
+    """
+    Class implementing the tool 'Detector' able to detect relevant
     corners/features in a single image.
     """
-
     # Techniques available:
     ORB = "ORB"  # Matcher.search_algorithm = 6 : LSH
     SIFT = "SIFT"  # Matcher.search_algorithm = 0 or 1 : KD-tree
-    DNN = "DNN"
+    DNN = "DNN"  # Deep Neural Network
 
-    def __init__(self,
-                 num_features,
-                 method):
-        """ Constructor.
+    def __init__(
+        self,
+        num_features,
+        method
+    ):
+        """
+        Constructor.
 
         :param num_features:
             The number of features to be detected and matched afterwards.
@@ -50,8 +53,11 @@ class Detector:
             print('\033[91m' + 'Method not found' + '\033[0m')
 
     @staticmethod
-    def _preprocess(img: Frame):
-        """ Private static method useful to preprocess the image in grayscale
+    def _preprocess(
+        img: Frame
+    ):
+        """
+        Private static method useful to preprocess the image in grayscale
         and in a built-in way within the class.
 
         :param img:
@@ -65,18 +71,28 @@ class Detector:
         # returning it back to grayscale
         return cv2.cvtColor(img.get_cv2_images(ret="rgb"), cv2.COLOR_BGR2GRAY)
 
-    def detect_and_compute(self,
-                           img: Frame):
-        """ Merge the behaviour of all possible core techniques in one function
+    def detect_and_compute(
+        self,
+        img: Frame,
+        inplace=True
+    ):
+        """
+        Merge the behaviour of all possible core techniques in one function
         in purpose of detecting and computing features.
 
         :param img:
             Image to be feature-detected.
-        :rtype img: Frame
+        :type img: Frame
+
+        :param inplace:
+            If the operation must happen inplace
+        :type inplace: bool
 
         :returns:
             Key-points and Descriptors
-        :rtype: Tuple[object, object]
         """
-        img.key_points, img.descriptors = self.core.detectAndCompute(
-            self._preprocess(img), None)
+        if inplace:
+            img.key_points, img.descriptors = self.core.detectAndCompute(
+                self._preprocess(img), None)
+        else:
+            return self.core.detectAndCompute(self._preprocess(img), None)
