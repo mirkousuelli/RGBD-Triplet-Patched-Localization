@@ -133,8 +133,8 @@ class Localizer:
 			Essential Matrix.
 		"""
 		# pre-conditions
-		assert action.f_matrix is not None, "You must compute the " \
-		                                    "Fundamental Matrix before!"
+		if action.f_matrix is None:
+			Localizer.compute_fundamental_matrix(action, inplace)
 
 		# essential matrix computation
 		if inplace:
@@ -260,7 +260,8 @@ class Localizer:
 			reference frame
 		"""
 		# pre-conditions
-		assert action.e_matrix is not None, "Compute the Essential Matrix before!"
+		if action.e_matrix is None:
+			Localizer.compute_essential_matrix(action, inplace)
 
 		# SVD decomposition of the essential matrix
 		w, u, vt = cv2.SVDecomp(action.e_matrix)
