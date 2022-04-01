@@ -4,14 +4,8 @@ from camera.Action import Action
 from camera.Frame import Frame
 from camera.Recording import Recording
 from tools.Visualizer import Visualizer
+from utils.utils import get_str
 
-def get_str(num) -> str:
-	if num < 10:
-		return "00" + str(num)
-	elif 10 <= num < 100:
-		return "0" + str(num)
-	else:
-		return str(num)
 
 def get_list_of_actions(start, stop, step) -> list[Action]:
 	actions = []

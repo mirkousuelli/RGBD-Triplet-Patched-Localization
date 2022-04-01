@@ -8,6 +8,8 @@ Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
+from typing import Union, Tuple
+
 import cv2
 import numpy as np
 
@@ -241,8 +243,9 @@ class Localizer:
 	@staticmethod
 	def roto_translation(
 		action: Action,
-		inplace=True
-	):
+		inplace=True,
+		normalize_em=True
+	) -> Union[None, Tuple[np.mat, np.ndarray]]:
 		"""
 		Compute the roto-translation components, i.e. the rotation matrix and
 		the translation vector from the essential matrix contained in the object
@@ -254,6 +257,11 @@ class Localizer:
 
 		:param inplace:
 		:type inplace:
+		
+		:param normalize_em:
+			States whether the essential matrix must be normalized or not to fit
+			the roto-translation.
+		:type normalize_em:
 
 		:return:
 			Rotation Matrix and Translation Vector w.r.t. the first
@@ -263,6 +271,9 @@ class Localizer:
 		if action.e_matrix is None:
 			Localizer.compute_essential_matrix(action, inplace)
 
+		if normalize_em:
+			action.normalize_essential_matrix()
+		
 		# SVD decomposition of the essential matrix
 		w, u, vt = cv2.SVDecomp(action.e_matrix)
 
@@ -275,6 +286,9 @@ class Localizer:
 		W = np.mat([[0, -1, 0],
 		            [1, 0, 0],
 		            [0, 0, 1]], dtype=float)
+		
+		if normalize_em:
+			Localizer.compute_essential_matrix(action, inplace)
 
 		# return the roto-translation components
 		if inplace:
@@ -285,20 +299,27 @@ class Localizer:
 
 	@staticmethod
 	def from_rot_to_quat(
-		action: Action
-	):
+		action: Action,
+		normalize_em=True
+	) -> np.ndarray:
 		"""
 		From Rotation Matrix to Quaternions.
 
 		:param action:
 			Action containing the two frames.
 		:type action: Action
+		
+		:param normalize_em:
+			States whether the essential matrix must be normalized or not to fit
+			the roto-translation.
+		:type normalize_em:
 
 		:return:
 			Quaternions
 		"""
 		# pre-conditions
-		assert action.R is not None, "Compute the Roto-Translation before!"
+		if action.R is None:
+			Localizer.roto_translation(action, normalize_em=normalize_em)
 
 		# storing locally the rotation matrix for the sake of simplicity
 		R = action.R

@@ -37,3 +37,10 @@ class Action(ProjectObject):
 		# Roto-Translation
 		self.R = None
 		self.t = None
+
+	def normalize_essential_matrix(self):
+		"""Normalizes the essential matrix"""
+		# pre-conditions
+		assert self.e_matrix is not None
+		
+		self.e_matrix = self.e_matrix / self.e_matrix[2, 2]
