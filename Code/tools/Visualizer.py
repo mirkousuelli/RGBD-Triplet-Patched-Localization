@@ -84,13 +84,8 @@ class Visualizer(ProjectObject):
 			cloud.colors[i][1] = new_scale * green_percentage
 			cloud.colors[i][2] = new_scale * blue_percentage
 
-	def plot_image_and_depth(self, color_scale: str = 'b',
-							 fig_size: Tuple = (8,4)) -> None:
+	def plot_image_and_depth(self, fig_size: Tuple = (8,4)) -> None:
 		"""This method plots RGB image aside the depth image of the frame.
-		
-		:param str color_scale:
-			{'r', 'g', 'b'} It is a character representing the color scale used
-			to print the depth image.
 		
 		:param Tuple fig_size:
 			It is the dimension of the figure on which the image is plotted.
@@ -98,9 +93,7 @@ class Visualizer(ProjectObject):
 		:return:
 			None
 		"""
-		if color_scale not in ['b', 'g', 'r']:
-			raise ValueError(self._raise_error("rgb_colors"))
-		elif self.frame is None:
+		if self.frame is None:
 			raise ValueError(self._raise_error("missing_frame"))
 		
 		color, depth = self.frame.get_pil_images()
@@ -148,7 +141,7 @@ class Visualizer(ProjectObject):
 
 	def plot_frame_point_cloud(self) -> None:
 		"""Plot the point cloud from the frame and the camera if it is passed.
-		
+			
 		:return:
 			None
 		"""
@@ -161,9 +154,14 @@ class Visualizer(ProjectObject):
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
-	def plot_action_point_cloud(self, color1: np.ndarray = None,
+	def plot_action_point_cloud(self, original_color: bool = True,
+								color1: np.ndarray = None,
 								color2: np.ndarray = None) -> None:
 		"""Plot the point cloud from the action and the camera if it is passed
+		
+		:param original_color:
+			States whether the point cloud must be viewed with the original
+			colors or not.
 			
 		:param color1:
 			The colorscale to use to print the first frame.
@@ -175,12 +173,14 @@ class Visualizer(ProjectObject):
 			None
 		"""
 		frame_1_point_cloud = self._get_frame_point_cloud(self.action.first)
-		if color1 is not None:
-			self._get_pc_color_scale(frame_1_point_cloud, color1)
+		if not original_color:
+			if color1 is not None:
+				self._get_pc_color_scale(frame_1_point_cloud, color1)
 
 		frame_2_point_cloud = self._get_frame_point_cloud(self.action.second)
-		if color2 is not None:
-			self._get_pc_color_scale(frame_2_point_cloud, color2)
+		if not original_color:
+			if color2 is not None:
+				self._get_pc_color_scale(frame_2_point_cloud, color2)
 		
 		# View the images
 		vis = o3d.visualization.Visualizer()
@@ -190,8 +190,12 @@ class Visualizer(ProjectObject):
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()
 	
-	def plot_recording_point_cloud(self) -> None:
+	def plot_recording_point_cloud(self, original_color: bool = False) -> None:
 		"""Plots the point cloud from the recording.
+		
+		:param original_color:
+			States whether the point cloud must be viewed with the original
+			colors or not.
 		
 		:return:
 			None
@@ -201,9 +205,18 @@ class Visualizer(ProjectObject):
 		vis.create_window()
 		
 		frames = self.recording.get_all_frames()
+		total_cloud = None
 		for frame in frames:
-			geometry = self._get_frame_point_cloud(frame)
-			vis.add_geometry(geometry)
+			if not original_color:
+				frame_cloud = self._get_frame_point_cloud(frame)
+			else:
+				frame_cloud = self._get_frame_point_cloud(frame)
+				
+			if total_cloud is None:
+				total_cloud = frame_cloud
+			else:
+				total_cloud += frame_cloud
 		
+		vis.add_geometry(total_cloud)
 		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
 		vis.run()

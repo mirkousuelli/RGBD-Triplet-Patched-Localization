@@ -113,7 +113,13 @@ class Frame(ProjectObject):
 	def get_rgbd_image(self) -> o3d.geometry.RGBDImage:
 		# TODO: implement automatic way to extract rgbd from a couple of any type of images
 		color, depth = self.get_o3d_images()
-		return o3d.geometry.RGBDImage.create_from_tum_format(color, depth)
+		rgbd = o3d.geometry.RGBDImage.create_from_tum_format(color,
+															 depth)
+		color = o3d.geometry.RGBDImage.create_from_color_and_depth(color,
+																   depth,
+																   convert_rgb_to_intensity=False)
+		rgbd.color = color.color
+		return rgbd
 
 	def get_size(self):
 		with Image.open(self.__color_path) as img:
