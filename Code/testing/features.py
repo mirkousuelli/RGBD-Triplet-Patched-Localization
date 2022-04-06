@@ -7,11 +7,17 @@ from tools.Merger import Merger
 from tools.Localizer import Localizer
 
 # image loading
-img_1 = Frame("../../Dataset/Colors/00000-color.png",
-              "../../Dataset/Depths/00000-depth.png", 0)
-img_2 = Frame("../../Dataset/Colors/00060-color.png",
-              "../../Dataset/Depths/00060-depth.png", 60)
+from utils.utils import get_str
+
+first = 1
+second = 2
+img_1 = Frame("../../Dataset/Colors/00" + get_str(first) + "-color.png",
+              "../../Dataset/Depths/00" + get_str(first) + "-depth.png", first)
+img_2 = Frame("../../Dataset/Colors/00" + get_str(second) + "-color.png",
+              "../../Dataset/Depths/00" + get_str(second) + "-depth.png", second)
 action = Action(img_1, img_2)
+
+print("Figure ", action.first._Frame__color_path, " and figure ", action.second._Frame__color_path)
 
 # objects initialization
 merger = Merger(num_features=5000,
@@ -30,11 +36,11 @@ localizer.compute_essential_matrix(action)
 print(action.e_matrix)
 print("\n")
 print("R, t = ")
-localizer.roto_translation(action, normalize_em=True)
+localizer.roto_translation(action, normalize_em=False)
 print(action.R, action.t)
 print("\n")
 print("Q = ")
-print(localizer.from_rot_to_quat(action))
+print(localizer.from_rot_to_quat(action, normalize_em=False))
 print("\n")
 print("R* = ")
 print(localizer.from_quat_to_rot(localizer.from_rot_to_quat(action)))

@@ -244,7 +244,7 @@ class Localizer:
 	def roto_translation(
 		action: Action,
 		inplace=True,
-		normalize_em=True
+		normalize_em=False
 	) -> Union[None, Tuple[np.mat, np.ndarray]]:
 		"""
 		Compute the roto-translation components, i.e. the rotation matrix and
@@ -260,7 +260,7 @@ class Localizer:
 		
 		:param normalize_em:
 			States whether the essential matrix must be normalized or not to fit
-			the roto-translation.
+			the roto-translation. It can be used only with inplace = True.
 		:type normalize_em:
 
 		:return:
@@ -269,13 +269,16 @@ class Localizer:
 		"""
 		# pre-conditions
 		if action.e_matrix is None:
-			Localizer.compute_essential_matrix(action, inplace)
+			if inplace:
+				Localizer.compute_essential_matrix(action, inplace)
+			else:
+				e_matrix = Localizer.compute_essential_matrix(action, inplace)
 
-		if normalize_em:
+		if normalize_em and inplace:
 			action.normalize_essential_matrix()
 		
 		# SVD decomposition of the essential matrix
-		w, u, vt = cv2.SVDecomp(action.e_matrix)
+		w, u, vt = cv2.SVDecomp(action.e_matrix if inplace else e_matrix)
 
 		# determinant adjustments
 		if np.linalg.det(u) < 0:
@@ -287,7 +290,7 @@ class Localizer:
 		            [1, 0, 0],
 		            [0, 0, 1]], dtype=float)
 		
-		if normalize_em:
+		if normalize_em and inplace:
 			Localizer.compute_essential_matrix(action, inplace)
 
 		# return the roto-translation components
