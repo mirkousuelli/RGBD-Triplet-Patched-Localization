@@ -130,12 +130,12 @@ class Visualizer(ProjectObject):
 		# Transform the image using the pose of the camera
 		frame_pose = frame.extract_pose()
 		quaternions = frame_pose[0:4]
-		position = frame_pose[4:7]
+		position = frame_pose[4:7] * -1
 		rotation = PointCloud.get_rotation_matrix_from_quaternion(quaternions)
 		
 		result = pcd
 		result = result.translate(position)
-		#rotation = np.linalg.inv(rotation)
+		rotation = np.linalg.inv(rotation)
 		result = result.rotate(rotation)
 		return result
 

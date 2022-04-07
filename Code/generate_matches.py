@@ -27,7 +27,7 @@ def multiply_quaternions(q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
 verbose = True
 where_to_write = "localization/01_direct.matches"
 matches_str = "1 0 0 0 0 0 0"
-for i in range(1, 834, 1):
+for i in range(2, 834, 1):
 	first_img = Frame("../Dataset/Colors/00" + get_str(i-1) + "-color.png",
 					  "../Dataset/Depths/00" + get_str(i-1) + "-depth.png",
 					  i-1)
@@ -45,10 +45,10 @@ for i in range(1, 834, 1):
 	merge_image = merger.merge_action(action)
 	
 	localizer = Localizer()
-	localizer.compute_fundamental_matrix(action)
-	localizer.compute_essential_matrix(action)
-	localizer.roto_translation(action, normalize_em=False)
-	q = localizer.from_rot_to_quat(action, normalize_em=False)
+	action.compute_fundamental_matrix()
+	action.compute_essential_matrix()
+	action.roto_translation(normalize_em=False)
+	q = action.from_rot_to_quat(normalize_em=False)
 	matches_str += "\n" + str(q[0]) + " " + str(q[1]) + " " + str(q[2]) + " " + str(q[3])
 	matches_str += " " + str(action.t[0]) + " " + str(action.t[1]) + " " + str(action.t[2])
 	print("Figure ", action.first._Frame__color_path, " and figure ", action.second._Frame__color_path)
