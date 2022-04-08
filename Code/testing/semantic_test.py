@@ -1,0 +1,23 @@
+import cv2
+
+from camera.Frame import Frame
+from camera.Action import Action
+
+from tools.Merger import Merger
+from tools.SemanticRANSAC import SemanticRANSAC
+
+# image loading
+img_1 = Frame("../../Dataset/Colors/00000-color.png",
+              "../../Dataset/Depths/00000-depth.png", 0)
+img_2 = Frame("../../Dataset/Colors/00060-color.png",
+              "../../Dataset/Depths/00060-depth.png", 60)
+action = Action(img_1, img_2)
+
+# objects initialization
+merger = Merger(num_features=5000,
+                detector_method="ORB",
+                matcher_method="FLANN")
+merger.merge_action(action)
+model = SemanticRANSAC()
+
+print(model.ransac_fundamental_matrix(action))
