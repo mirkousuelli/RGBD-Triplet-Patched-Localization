@@ -64,10 +64,6 @@ class Action(ProjectObject):
 		"""
 		Compute the Fundamental matrix between the two frames inside the action.
 
-		:param action:
-			Couple of frame.
-		:return: Action
-
 		:param inplace:
             If the operation must happen inplace
         :type inplace: bool
@@ -111,10 +107,6 @@ class Action(ProjectObject):
 		This static method computes the inlier through the previously computed
 		mask through RANSAC and afterwards selects all the matches between
 		inliers.
-
-		:param action:
-			The action which needs to be used for the inliers' extraction
-		:type action: Action
 		"""
 		# pre-conditions
 		assert len(self.first.points) == len(self.second.points), \
@@ -132,6 +124,23 @@ class Action(ProjectObject):
 			if self.f_mask[i].ravel() == 1:
 				self.links_inliers.append(self.links[i])
 
+	def set_inliers(
+		self,
+		mask
+	):
+		"""
+		Set the inlier mask.
+
+		:param mask:
+			inliers mask where 1 stands for inlier and 0 not according to the
+			related match.
+		:type mask: np.array
+		"""
+		# Looking for links through the previous selected inliers
+		for i in range(len(self.links)):
+			if mask[i] == 1:
+				self.links_inliers.append(self.links[i])
+
 	def compute_essential_matrix(
 		self,
 		inplace=True
@@ -139,10 +148,6 @@ class Action(ProjectObject):
 		"""
 		Computes the essential matrix from the Action fundamental matrix and the
 		frames' calibration matrices.
-
-		:param action:
-			The action containing the fundamental matrix.
-		:type action: Action
 
 		:param inplace:
 			If the operation must happen inplace.
@@ -169,10 +174,6 @@ class Action(ProjectObject):
 		"""
 		Compute the correspondent epipolar lines for both frames involved
 		within the action
-
-		:param action:
-			Action consisting of two frames.
-		:type action:
 		"""
 		# pre-conditions
 		assert self.f_matrix is not None, "You must compute the " \
@@ -236,10 +237,6 @@ class Action(ProjectObject):
 		"""
 		Show the epipolar lines on both frames within the Action.
 
-		:param action:
-			Action consisting of two frames.
-		:type action: Action
-
 		:return:
 			Final image of the two frames with the epipolar lines drawn
 		"""
@@ -264,10 +261,6 @@ class Action(ProjectObject):
 		Compute the roto-translation components, i.e. the rotation matrix and
 		the translation vector from the essential matrix contained in the object
 		Action.
-
-		:param action:
-			Action containing the Essential Matrix of the two frames.
-		:type action:
 
 		:param inplace:
 		:type inplace:
@@ -320,10 +313,6 @@ class Action(ProjectObject):
 	) -> np.ndarray:
 		"""
 		From Rotation Matrix to Quaternions.
-
-		:param action:
-			Action containing the two frames.
-		:type action: Action
 		
 		:param normalize_em:
 			States whether the essential matrix must be normalized or not to fit

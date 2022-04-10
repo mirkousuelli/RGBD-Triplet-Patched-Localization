@@ -12,7 +12,7 @@ class Recording(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["recording"]
 	
 	def __init__(self,
-				 actions: list[Action]):
+				 actions):
 		super().__init__()
 		
 		for i in range(len(actions)-1):
@@ -20,7 +20,7 @@ class Recording(ProjectObject):
 		
 		self.actions = actions.copy()
 		
-	def get_all_frames(self) -> list[Frame]:
+	def get_all_frames(self):
 		"""Get all the images in the recording.
 		
 		:return:

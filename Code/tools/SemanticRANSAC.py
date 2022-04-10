@@ -15,110 +15,6 @@ class SemanticRANSAC:
 		pass
 
 	@staticmethod
-	def calculate_homography(
-		correspondences
-	):
-		"""
-		Computers a homography from 4-correspondences.
-
-		:param correspondences:
-		:return:
-		"""
-		# loop through correspondences and create assemble matrix
-		aList = []
-		for corr in correspondences:
-			p1 = np.matrix([corr.item(0), corr.item(1), 1])
-			p2 = np.matrix([corr.item(2), corr.item(3), 1])
-
-			a2 = [0, 0, 0, -p2.item(2) * p1.item(0), -p2.item(2) * p1.item(1),
-			      -p2.item(2) * p1.item(2), p2.item(1) * p1.item(0),
-			      p2.item(1) * p1.item(1), p2.item(1) * p1.item(2)]
-			a1 = [-p2.item(2) * p1.item(0), -p2.item(2) * p1.item(1),
-			      -p2.item(2) * p1.item(2), 0, 0, 0, p2.item(0) * p1.item(0),
-			      p2.item(0) * p1.item(1), p2.item(0) * p1.item(2)]
-			aList.append(a1)
-			aList.append(a2)
-
-		matrixA = np.matrix(aList)
-
-		# svd composition
-		u, s, v = np.linalg.svd(matrixA)
-
-		# reshape the min singular value into a 3 by 3 matrix
-		h = np.reshape(v[8], (3, 3))
-
-		# normalize and now we have h
-		h = (1 / h.item(8)) * h
-
-		return h
-
-	@staticmethod
-	def homography_error(
-		correspondences,
-		homography
-	):
-		"""
-		Calculate the geometric distance between estimated points and
-		original points.
-
-		:param correspondences:
-		:param homography:
-		:return:
-		"""
-		p1 = np.transpose(np.matrix([correspondences[0].item(0),
-		                             correspondences[0].item(1), 1]))
-		estimatep2 = np.dot(homography, p1)
-		estimatep2 = (1/estimatep2.item(2))*estimatep2
-
-		p2 = np.transpose(np.matrix([correspondences[0].item(2),
-		                             correspondences[0].item(3), 1]))
-		error = p2 - estimatep2
-		return np.linalg.norm(error)
-
-	def ransac_homography(
-		self,
-		action: Action,
-		distance_error=5,
-		threshold=0.4,
-		iterations=1000,
-		semantic=False
-	):
-		"""
-		Compute a homography through RANSAC.
-
-		:param action:
-		:param distance_error:
-		:param threshold:
-		:param iterations:
-		:param semantic:
-		:return:
-		"""
-		num_pts = len(action.first.points)
-		best_mask = [0] * num_pts
-		h = None
-
-		for i in range(iterations):
-			# find 4 random points to calculate a homography
-			prob = self.semantic_filter() if semantic else None
-			rand_samples = np.random.choice(action.links, 4, p=prob)
-
-			# call the homography function on those points
-			h = self.calculate_homography(rand_samples)
-			mask = []
-
-			for link in action.links:
-				mask.append(
-					1 if self.homography_error(link, h) < distance_error else 0
-				)
-
-			best_mask = mask if np.cumsum(mask) > np.cumsum(best_mask) else best_mask
-
-			if np.cumsum(best_mask) > (num_pts * threshold):
-				break
-
-		return h, best_mask
-
-	@staticmethod
 	def calculate_fundamental_matrix(
 		x1,
 		x2
@@ -178,8 +74,8 @@ class SemanticRANSAC:
 	def ransac_fundamental_matrix(
 			self,
 			action: Action,
-			error=5,
-			threshold=0.4,
+			error=0.7,
+			threshold=0.3,
 			iterations=1000,
 			semantic=False
 	):
@@ -194,7 +90,7 @@ class SemanticRANSAC:
 		"""
 		num_pts = min(len(action.first.points), len(action.second.points))
 		best_mask = [0] * num_pts
-		f_matrix = None
+		best_f_matrix = None
 
 		for _ in range(iterations):
 			# find 8 random points
@@ -216,15 +112,21 @@ class SemanticRANSAC:
 			f_matrix = self.calculate_fundamental_matrix(pt1, pt2)
 			mask = []
 
-			for _ in range(x1.shape[0]):
-				mask.append(
-					1 if self.fundamental_matrix_error(pt1, pt2, f_matrix) < error else 0
-				)
+			for m in action.links:
+				t1 = np.int32(action.first.key_points[m.queryIdx].pt)
+				t2 = np.int32(action.second.key_points[m.trainIdx].pt)
+				t1 = np.matrix([t1[0], t1[1], 1])
+				t2 = np.matrix([t2[0], t2[1], 1])
+				if self.fundamental_matrix_error(t1, t2, f_matrix) < error:
+					mask.append(1)
+				else:
+					mask.append(0)
 
 			if sum(i for i in mask) > sum(i for i in best_mask):
 				best_mask = mask
+				best_f_matrix = f_matrix
 
 			if sum(i for i in best_mask) > (num_pts * threshold):
 				break
 
-		return f_matrix, best_mask
+		return best_f_matrix, best_mask

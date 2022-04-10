@@ -7,7 +7,7 @@ from tools.Visualizer import Visualizer
 from utils.utils import get_str
 
 
-def get_list_of_actions(start, stop, step) -> list[Action]:
+def get_list_of_actions(start, stop, step):
 	actions = []
 	previous_frame = None
 	for i in range(start, stop, step):

@@ -20,4 +20,10 @@ merger = Merger(num_features=5000,
 merger.merge_action(action)
 model = SemanticRANSAC()
 
-print(model.ransac_fundamental_matrix(action))
+f_matrix, mask = model.ransac_fundamental_matrix(action)
+action.set_inliers(mask)
+
+inliers_image = merger.merge_inliers(action)
+
+cv2.imshow("Inliers", inliers_image)
+cv2.waitKey()
