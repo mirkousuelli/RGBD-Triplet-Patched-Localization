@@ -2,7 +2,6 @@ import numpy as np
 
 from camera.Action import Action
 from camera.Frame import Frame
-from tools.Localizer import Localizer
 from tools.Merger import Merger
 from utils.utils import get_str
 
@@ -44,7 +43,6 @@ for i in range(2, 834, 1):
 					matcher_method="FLANN")
 	merge_image = merger.merge_action(action)
 	
-	localizer = Localizer()
 	action.compute_fundamental_matrix()
 	action.compute_essential_matrix()
 	action.roto_translation(normalize_em=False)
@@ -59,7 +57,6 @@ for i in range(2, 834, 1):
 	del q
 	del merge_image
 	del merger
-	del localizer
 
 clean_matches = "1 0 0 0 0 0 0"
 

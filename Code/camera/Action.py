@@ -17,12 +17,17 @@ from ProjectObject import ProjectObject
 
 
 # TODO: wow, implement me please
+from tools.Merger import Merger
 from utils.transformation_utils import get_4x4_transform_from_quaternion, \
 	get_4x4_transform_from_translation
 
 
 class Action(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["action"]
+	# RANSAC hyper-parameters
+	RANSAC_THRESHOLD_PIXEL = 0.1
+	RANSAC_PROB = 0.999
+	RANSAC_ITER = 10000
 	
 	def __init__(self,
 	             first: Frame,
@@ -57,11 +62,6 @@ class Action(ProjectObject):
 		assert self.e_matrix is not None
 		
 		self.e_matrix = self.e_matrix / self.e_matrix[2, 2]
-	
-	# RANSAC hyper-parameters
-	RANSAC_THRESHOLD_PIXEL = 0.1
-	RANSAC_PROB = 0.999
-	RANSAC_ITER = 10000
 
 	def compute_fundamental_matrix(
 		self,
@@ -69,10 +69,6 @@ class Action(ProjectObject):
 	):
 		"""
 		Compute the Fundamental matrix between the two frames inside the action.
-
-		:param action:
-			Couple of frame.
-		:return: Action
 
 		:param inplace:
             If the operation must happen inplace
@@ -110,17 +106,11 @@ class Action(ProjectObject):
 		else:
 			return np.mat(F), mask
 
-	def compute_inliers(
-		self
-	):
+	def compute_inliers(self):
 		"""
 		This static method computes the inlier through the previously computed
 		mask through RANSAC and afterwards selects all the matches between
 		inliers.
-
-		:param action:
-			The action which needs to be used for the inliers' extraction
-		:type action: Action
 		"""
 		# pre-conditions
 		assert len(self.first.points) == len(self.second.points), \
@@ -169,16 +159,10 @@ class Action(ProjectObject):
 			return self.second.calibration_matrix().T @ self.f_matrix \
 			       @ self.first.calibration_matrix()
 
-	def compute_epipolar_lines(
-		self
-	):
+	def compute_epipolar_lines(self):
 		"""
 		Compute the correspondent epipolar lines for both frames involved
 		within the action
-
-		:param action:
-			Action consisting of two frames.
-		:type action:
 		"""
 		# pre-conditions
 		assert self.f_matrix is not None, "You must compute the " \
@@ -338,9 +322,10 @@ class Action(ProjectObject):
 			The estimation method to be used in ICP to register the point clouds.
 		
 		:return:
-			The matrix representing the homography of the rototranslation.
+			The matrix representing the transformation of the rototranslation.
 		"""
 		ACCEPTED_ESTIMATION_METHODS = ["point-plane", "point-point"]
+		VOXEL_DOWN_SAMPLE = 0.01
 		if estimation_method not in ACCEPTED_ESTIMATION_METHODS:
 			raise ValueError("Estimation method must be one of the following "
 							 "%s" % ACCEPTED_ESTIMATION_METHODS)
@@ -361,8 +346,8 @@ class Action(ProjectObject):
 		transformation_from_0_to_2 = np.matmul(translation_2, rotation_2)
 		transformation_from_1_to_0 = np.linalg.inv(transformation_from_0_to_1)
 		transformation_from_2_to_0 = np.linalg.inv(transformation_from_0_to_2)
-		transformation = np.matmul(transformation_from_0_to_1,
-								   transformation_from_2_to_0)
+		transformation_from_2_to_1 = np.matmul(transformation_from_0_to_1,
+											   transformation_from_2_to_0)
 		
 		# Perform the registration using ICP
 		first_cloud = self.first.get_point_cloud()
@@ -374,8 +359,8 @@ class Action(ProjectObject):
 												  len(second_cloud.points)))
 		
 		# Down sample point clouds to simplify the task of finding the transformation
-		first_cloud = first_cloud.voxel_down_sample(0.01)
-		second_cloud = second_cloud.voxel_down_sample(0.01)
+		first_cloud = first_cloud.voxel_down_sample(VOXEL_DOWN_SAMPLE)
+		second_cloud = second_cloud.voxel_down_sample(VOXEL_DOWN_SAMPLE)
 		
 		if verbose:
 			print("The first cloud has %s points and the second cloud has %s "
@@ -393,9 +378,9 @@ class Action(ProjectObject):
 		icp_reg = registration_icp(second_cloud,
 								   first_cloud,
 								   threshold,
-								   transformation,
-								   estimation,
-								   ICPConvergenceCriteria(max_iteration=2000))
+								   transformation_from_2_to_1,
+								   estimation_method=estimation,
+								   criteria=ICPConvergenceCriteria(max_iteration=2000))
 		
 		if verbose:
 			evaluation = evaluate_registration(second_cloud,
@@ -478,39 +463,3 @@ class Action(ProjectObject):
 		                                q[0].flatten().squeeze(),
 		                                q[1].flatten().squeeze(),
 		                                q[2].flatten().squeeze()))).squeeze()
-
-	def from_quat_to_rot(self, q):
-		"""
-		From Quaternions to Rotation Matrix.
-
-		:param q:
-			Quaternions.
-
-		:return:
-			Rotation Matrix.
-		"""
-		# scale term
-		s = sum(i ** 2 for i in q) ** (-2)
-
-		# First row of the rotation matrix
-		r00 = 1 - 2 * s * (q[2] ** 2 + q[3] ** 2)
-		r01 = 2 * s * (q[1] * q[2] - q[0] * q[3])
-		r02 = 2 * s * (q[1] * q[3] + q[0] * q[2])
-
-		# Second row of the rotation matrix
-		r10 = 2 * s * (q[1] * q[2] + q[0] * q[3])
-		r11 = 1 - 2 * s * (q[1] ** 2 + q[3] ** 2)
-		r12 = 2 * s * (q[2] * q[3] - q[0] * q[1])
-
-		# Third row of the rotation matrix
-		r20 = 2 * s * (q[1] * q[3] - q[0] * q[2])
-		r21 = 2 * s * (q[2] * q[3] + q[0] * q[1])
-		r22 = 1 - 2 * s * (q[1] ** 2 + q[2] ** 2)
-
-		# 3x3 rotation matrix
-		return np.mat([[r00, r01, r02],
-		               [r10, r11, r12],
-		               [r20, r21, r22]], dtype=float)
-
-	
-	
