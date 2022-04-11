@@ -10,6 +10,9 @@ import open3d as o3d
 from PIL import Image
 
 # In-project imports
+from open3d.cpu.pybind.camera import PinholeCameraIntrinsic, PrimeSenseDefault
+from open3d.cpu.pybind.geometry import PointCloud
+
 from ProjectObject import ProjectObject
 
 
@@ -120,6 +123,15 @@ class Frame(ProjectObject):
 																   convert_rgb_to_intensity=False)
 		rgbd.color = color.color
 		return rgbd
+
+	def get_point_cloud(self) -> PointCloud:
+		"""Gets the point cloud of the frame.
+		
+		:return: The point cloud of the frame.
+		"""
+		pcd = PointCloud.create_from_rgbd_image(self.get_rgbd_image(),
+												PinholeCameraIntrinsic(PrimeSenseDefault))
+		return pcd
 
 	def get_size(self):
 		with Image.open(self.__color_path) as img:

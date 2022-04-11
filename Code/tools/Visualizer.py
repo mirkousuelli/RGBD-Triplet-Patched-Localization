@@ -23,6 +23,7 @@ from camera.Frame import Frame
 from camera.Action import Action
 from camera.Recording import Recording
 from ProjectObject import ProjectObject
+from utils.transformation_utils import get_4x4_transform_from_translation
 
 visualization = o3d.visualization
 PinholeCameraIntrinsic = o3d.camera.PinholeCameraIntrinsic
@@ -120,21 +121,15 @@ class Visualizer(ProjectObject):
 		:rtype:
 			o3d.geometry.PointCloud
 		"""
-		# Get the rgbd image
-		rgbd_image = frame.get_rgbd_image()
-		
-		# Build the point cloud
-		pcd = PointCloud.create_from_rgbd_image(rgbd_image,
-												PinholeCameraIntrinsic(PrimeSenseDefault))
-		
 		# Transform the image using the pose of the camera
 		frame_pose = frame.extract_pose()
 		quaternions = frame_pose[0:4]
 		position = frame_pose[4:7] * -1
 		rotation = PointCloud.get_rotation_matrix_from_quaternion(quaternions)
 		
-		result = pcd
+		result = frame.get_point_cloud()
 		result = result.translate(position)
+		rotation = np.matrix.transpose(rotation)
 		rotation = np.linalg.inv(rotation)
 		result = result.rotate(rotation)
 		return result
@@ -156,7 +151,9 @@ class Visualizer(ProjectObject):
 	
 	def plot_action_point_cloud(self, original_color: bool = True,
 								color1: np.ndarray = None,
-								color2: np.ndarray = None) -> None:
+								color2: np.ndarray = None,
+								registration_method: str = "icp",
+								verbose: bool = True) -> None:
 		"""Plot the point cloud from the action and the camera if it is passed
 		
 		:param original_color:
@@ -168,55 +165,63 @@ class Visualizer(ProjectObject):
 			
 		:param color2:
 			The colorscale to use to print the second frame.
+			
+		:param registration_method:
+			The registration method to be used to align the point clouds.
+			
+		:param verbose:
+			States if detailed printing must be shown.
 		
 		:return:
 			None
 		"""
-		frame_1_point_cloud = self._get_frame_point_cloud(self.action.first)
+		if registration_method not in ["icp"]:
+			raise ValueError("Registration method not present")
+		
+		transformation_from_2_to_1 = self.action.roto_translation_with_icp(0.02,
+																		   verbose=verbose)
+		frame_1_point_cloud = self.action.first.get_point_cloud()
+		frame_2_point_cloud = self.action.second.get_point_cloud()
+		frame_2_point_cloud.transform(transformation_from_2_to_1)
+		
 		if not original_color:
 			if color1 is not None:
 				self._get_pc_color_scale(frame_1_point_cloud, color1)
-
-		frame_2_point_cloud = self._get_frame_point_cloud(self.action.second)
-		if not original_color:
 			if color2 is not None:
 				self._get_pc_color_scale(frame_2_point_cloud, color2)
 		
 		# View the images
-		vis = o3d.visualization.Visualizer()
-		vis.create_window()
-		new_cloud = frame_1_point_cloud + frame_2_point_cloud
-		vis.add_geometry(new_cloud)
-		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
-		vis.run()
+		o3d.visualization.draw_geometries([frame_1_point_cloud,
+										   frame_2_point_cloud])
 	
-	def plot_recording_point_cloud(self, original_color: bool = False) -> None:
+	def plot_recording_point_cloud(self, original_color: bool = True,
+								   registration_method: str = "icp") -> None:
 		"""Plots the point cloud from the recording.
 		
 		:param original_color:
 			States whether the point cloud must be viewed with the original
 			colors or not.
+			
+		:param registration_method:
+			The registration method to be used to align the point clouds.
 		
 		:return:
 			None
 		"""
+		if registration_method not in ["icp"]:
+			raise ValueError("Registration method not present")
+		
+		point_clouds = [self.recording.actions[0].first.get_point_cloud()]
+		total_transformation = get_4x4_transform_from_translation(np.array([0,
+																			0,
+																			0]))
+		for action in self.recording.actions:
+			transformation_from_2_to_1 = action.roto_translation_with_icp(0.02)
+			frame_2_point_cloud = action.second.get_point_cloud()
+			total_transformation = np.matmul(total_transformation,
+											 transformation_from_2_to_1)
+			frame_2_point_cloud.transform(total_transformation)
+			point_clouds.append(frame_2_point_cloud)
+
 		# View the images
-		vis = o3d.visualization.Visualizer()
-		vis.create_window()
-		
-		frames = self.recording.get_all_frames()
-		total_cloud = None
-		for frame in frames:
-			if not original_color:
-				frame_cloud = self._get_frame_point_cloud(frame)
-			else:
-				frame_cloud = self._get_frame_point_cloud(frame)
-				
-			if total_cloud is None:
-				total_cloud = frame_cloud
-			else:
-				total_cloud += frame_cloud
-		
-		vis.add_geometry(total_cloud)
-		o3d.visualization.ViewControl.set_zoom(vis.get_view_control(), 0.25)
-		vis.run()
+		o3d.visualization.draw_geometries(point_clouds)

@@ -7,12 +7,18 @@ from typing import Tuple, Union
 
 import cv2
 import numpy as np
+from open3d.cpu.pybind.geometry import KDTreeSearchParamHybrid
+from open3d.cpu.pybind.pipelines.registration import registration_icp, \
+	TransformationEstimationPointToPoint, evaluate_registration, \
+	ICPConvergenceCriteria, TransformationEstimationPointToPlane
 
 from camera.Frame import Frame
 from ProjectObject import ProjectObject
 
 
 # TODO: wow, implement me please
+from utils.transformation_utils import get_4x4_transform_from_quaternion, \
+	get_4x4_transform_from_translation
 
 
 class Action(ProjectObject):
@@ -313,6 +319,93 @@ class Action(ProjectObject):
 			self.t = u[:, 2]
 		else:
 			return np.mat(u) * W * np.mat(vt), u[:, 2]
+
+	def roto_translation_with_icp(self, threshold,
+								  verbose: bool = True,
+								  estimation_method: str = "point-plane") -> np.ndarray:
+		"""ICP used to register the images of the two point clouds.
+		
+		The method uses ICP on the two images composing the action to align the
+		two point clouds.
+		
+		:param threshold:
+			It is the maximum point-pair distance.
+			
+		:param verbose:
+			States if detailed printing must be shown.
+			
+		:param estimation_method:
+			The estimation method to be used in ICP to register the point clouds.
+		
+		:return:
+			The matrix representing the homography of the rototranslation.
+		"""
+		ACCEPTED_ESTIMATION_METHODS = ["point-plane", "point-point"]
+		if estimation_method not in ACCEPTED_ESTIMATION_METHODS:
+			raise ValueError("Estimation method must be one of the following "
+							 "%s" % ACCEPTED_ESTIMATION_METHODS)
+		
+		# Get a rough transformation of the second frame into the first
+		pose_2 = self.second.extract_pose()
+		quat_2 = pose_2[0:4]
+		pos_2 = pose_2[4:7]
+		pose_1 = self.first.extract_pose()
+		quat_1 = pose_1[0:4]
+		pos_1 = pose_1[4:7]
+
+		translation_1 = get_4x4_transform_from_translation(pos_1)
+		rotation_1 = get_4x4_transform_from_quaternion(quat_1)
+		translation_2 = get_4x4_transform_from_translation(pos_2)
+		rotation_2 = get_4x4_transform_from_quaternion(quat_2)
+		transformation_from_0_to_1 = np.matmul(translation_1, rotation_1)
+		transformation_from_0_to_2 = np.matmul(translation_2, rotation_2)
+		transformation_from_1_to_0 = np.linalg.inv(transformation_from_0_to_1)
+		transformation_from_2_to_0 = np.linalg.inv(transformation_from_0_to_2)
+		transformation = np.matmul(transformation_from_0_to_1,
+								   transformation_from_2_to_0)
+		
+		# Perform the registration using ICP
+		first_cloud = self.first.get_point_cloud()
+		second_cloud = self.second.get_point_cloud()
+		
+		if verbose:
+			print("The first cloud has %s points and the second cloud has %s "
+				  "points before downsampling" % (len(first_cloud.points),
+												  len(second_cloud.points)))
+		
+		# Down sample point clouds to simplify the task of finding the transformation
+		first_cloud = first_cloud.voxel_down_sample(0.01)
+		second_cloud = second_cloud.voxel_down_sample(0.01)
+		
+		if verbose:
+			print("The first cloud has %s points and the second cloud has %s "
+				  "points after downsampling" % (len(first_cloud.points),
+												 len(second_cloud.points)))
+		
+		if estimation_method == "point-point":
+			estimation = TransformationEstimationPointToPoint()
+		else:
+			first_cloud.estimate_normals(KDTreeSearchParamHybrid(radius=0.1,
+																 max_nn=30))
+			second_cloud.estimate_normals(KDTreeSearchParamHybrid(radius=0.1,
+																  max_nn=30))
+			estimation = TransformationEstimationPointToPlane()
+		icp_reg = registration_icp(second_cloud,
+								   first_cloud,
+								   threshold,
+								   transformation,
+								   estimation,
+								   ICPConvergenceCriteria(max_iteration=2000))
+		
+		if verbose:
+			evaluation = evaluate_registration(second_cloud,
+											   first_cloud,
+											   threshold,
+											   icp_reg.transformation)
+			print("The computed transformation is:\n %s" % icp_reg.transformation)
+			print("The registration evaluation is %s" % evaluation)
+		
+		return icp_reg.transformation
 
 	def from_rot_to_quat(
 		self,
