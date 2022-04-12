@@ -1,0 +1,1 @@
+Both with and without transpose operation on the rotation matrix, the poses of the dataset does not provide a correct alignment.

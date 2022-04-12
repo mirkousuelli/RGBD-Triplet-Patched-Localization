@@ -7,16 +7,27 @@ from typing import Tuple, Union
 
 import cv2
 import numpy as np
+from open3d.cpu.pybind.geometry import KDTreeSearchParamHybrid
+from open3d.cpu.pybind.pipelines.registration import registration_icp, \
+	TransformationEstimationPointToPoint, evaluate_registration, \
+	ICPConvergenceCriteria, TransformationEstimationPointToPlane
 
 from camera.Frame import Frame
 from ProjectObject import ProjectObject
 
 
 # TODO: wow, implement me please
+from tools.Merger import Merger
+from utils.transformation_utils import get_4x4_transform_from_quaternion, \
+	get_4x4_transform_from_translation
 
 
 class Action(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["action"]
+	# RANSAC hyper-parameters
+	RANSAC_THRESHOLD_PIXEL = 0.1
+	RANSAC_PROB = 0.999
+	RANSAC_ITER = 10000
 	
 	def __init__(self,
 	             first: Frame,
@@ -51,11 +62,6 @@ class Action(ProjectObject):
 		assert self.e_matrix is not None
 		
 		self.e_matrix = self.e_matrix / self.e_matrix[2, 2]
-	
-	# RANSAC hyper-parameters
-	RANSAC_THRESHOLD_PIXEL = 0.1
-	RANSAC_PROB = 0.999
-	RANSAC_ITER = 10000
 
 	def compute_fundamental_matrix(
 		self,
@@ -100,9 +106,7 @@ class Action(ProjectObject):
 		else:
 			return np.mat(F), mask
 
-	def compute_inliers(
-		self
-	):
+	def compute_inliers(self):
 		"""
 		This static method computes the inlier through the previously computed
 		mask through RANSAC and afterwards selects all the matches between
@@ -168,9 +172,7 @@ class Action(ProjectObject):
 			return self.second.calibration_matrix().T @ self.f_matrix \
 			       @ self.first.calibration_matrix()
 
-	def compute_epipolar_lines(
-		self
-	):
+	def compute_epipolar_lines(self):
 		"""
 		Compute the correspondent epipolar lines for both frames involved
 		within the action
@@ -307,6 +309,94 @@ class Action(ProjectObject):
 		else:
 			return np.mat(u) * W * np.mat(vt), u[:, 2]
 
+	def roto_translation_with_icp(self, threshold,
+								  verbose: bool = True,
+								  estimation_method: str = "point-plane") -> np.ndarray:
+		"""ICP used to register the images of the two point clouds.
+		
+		The method uses ICP on the two images composing the action to align the
+		two point clouds.
+		
+		:param threshold:
+			It is the maximum point-pair distance.
+			
+		:param verbose:
+			States if detailed printing must be shown.
+			
+		:param estimation_method:
+			The estimation method to be used in ICP to register the point clouds.
+		
+		:return:
+			The matrix representing the transformation of the rototranslation.
+		"""
+		ACCEPTED_ESTIMATION_METHODS = ["point-plane", "point-point"]
+		VOXEL_DOWN_SAMPLE = 0.01
+		if estimation_method not in ACCEPTED_ESTIMATION_METHODS:
+			raise ValueError("Estimation method must be one of the following "
+							 "%s" % ACCEPTED_ESTIMATION_METHODS)
+		
+		# Get a rough transformation of the second frame into the first
+		pose_2 = self.second.extract_pose()
+		quat_2 = pose_2[0:4]
+		pos_2 = pose_2[4:7]
+		pose_1 = self.first.extract_pose()
+		quat_1 = pose_1[0:4]
+		pos_1 = pose_1[4:7]
+
+		translation_1 = get_4x4_transform_from_translation(pos_1)
+		rotation_1 = get_4x4_transform_from_quaternion(quat_1)
+		translation_2 = get_4x4_transform_from_translation(pos_2)
+		rotation_2 = get_4x4_transform_from_quaternion(quat_2)
+		transformation_from_0_to_1 = np.matmul(translation_1, rotation_1)
+		transformation_from_0_to_2 = np.matmul(translation_2, rotation_2)
+		transformation_from_1_to_0 = np.linalg.inv(transformation_from_0_to_1)
+		transformation_from_2_to_0 = np.linalg.inv(transformation_from_0_to_2)
+		transformation_from_2_to_1 = np.matmul(transformation_from_0_to_1,
+											   transformation_from_2_to_0)
+		
+		# Perform the registration using ICP
+		first_cloud = self.first.get_point_cloud()
+		second_cloud = self.second.get_point_cloud()
+		
+		if verbose:
+			print("The first cloud has %s points and the second cloud has %s "
+				  "points before downsampling" % (len(first_cloud.points),
+												  len(second_cloud.points)))
+		
+		# Down sample point clouds to simplify the task of finding the transformation
+		first_cloud = first_cloud.voxel_down_sample(VOXEL_DOWN_SAMPLE)
+		second_cloud = second_cloud.voxel_down_sample(VOXEL_DOWN_SAMPLE)
+		
+		if verbose:
+			print("The first cloud has %s points and the second cloud has %s "
+				  "points after downsampling" % (len(first_cloud.points),
+												 len(second_cloud.points)))
+		
+		if estimation_method == "point-point":
+			estimation = TransformationEstimationPointToPoint()
+		else:
+			first_cloud.estimate_normals(KDTreeSearchParamHybrid(radius=0.1,
+																 max_nn=30))
+			second_cloud.estimate_normals(KDTreeSearchParamHybrid(radius=0.1,
+																  max_nn=30))
+			estimation = TransformationEstimationPointToPlane()
+		icp_reg = registration_icp(second_cloud,
+								   first_cloud,
+								   threshold,
+								   transformation_from_2_to_1,
+								   estimation_method=estimation,
+								   criteria=ICPConvergenceCriteria(max_iteration=2000))
+		
+		if verbose:
+			evaluation = evaluate_registration(second_cloud,
+											   first_cloud,
+											   threshold,
+											   icp_reg.transformation)
+			print("The computed transformation is:\n %s" % icp_reg.transformation)
+			print("The registration evaluation is %s" % evaluation)
+		
+		return icp_reg.transformation
+
 	def from_rot_to_quat(
 		self,
 		normalize_em=True
@@ -374,39 +464,3 @@ class Action(ProjectObject):
 		                                q[0].flatten().squeeze(),
 		                                q[1].flatten().squeeze(),
 		                                q[2].flatten().squeeze()))).squeeze()
-
-	def from_quat_to_rot(self, q):
-		"""
-		From Quaternions to Rotation Matrix.
-
-		:param q:
-			Quaternions.
-
-		:return:
-			Rotation Matrix.
-		"""
-		# scale term
-		s = sum(i ** 2 for i in q) ** (-2)
-
-		# First row of the rotation matrix
-		r00 = 1 - 2 * s * (q[2] ** 2 + q[3] ** 2)
-		r01 = 2 * s * (q[1] * q[2] - q[0] * q[3])
-		r02 = 2 * s * (q[1] * q[3] + q[0] * q[2])
-
-		# Second row of the rotation matrix
-		r10 = 2 * s * (q[1] * q[2] + q[0] * q[3])
-		r11 = 1 - 2 * s * (q[1] ** 2 + q[3] ** 2)
-		r12 = 2 * s * (q[2] * q[3] - q[0] * q[1])
-
-		# Third row of the rotation matrix
-		r20 = 2 * s * (q[1] * q[3] - q[0] * q[2])
-		r21 = 2 * s * (q[2] * q[3] + q[0] * q[1])
-		r22 = 1 - 2 * s * (q[1] ** 2 + q[2] ** 2)
-
-		# 3x3 rotation matrix
-		return np.mat([[r00, r01, r02],
-		               [r10, r11, r12],
-		               [r20, r21, r22]], dtype=float)
-
-	
-	
