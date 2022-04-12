@@ -4,7 +4,7 @@ from camera.Frame import Frame
 from camera.Action import Action
 
 from tools.Merger import Merger
-from tools.SemanticRANSAC import SemanticRANSAC
+from tools.SemanticSampling import SemanticSampling
 
 # image loading
 img_1 = Frame("../../Dataset/Colors/00000-color.png",
@@ -18,9 +18,11 @@ merger = Merger(num_features=5000,
                 detector_method="ORB",
                 matcher_method="FLANN")
 merger.merge_action(action)
-model = SemanticRANSAC()
+model = SemanticSampling()
 
-f_matrix, mask = model.ransac_fundamental_matrix(action)
+f_matrix, mask = model.ransac_fundamental_matrix(action,
+                                                 sampling_rate=0.4,
+                                                 error=0.8)
 action.set_inliers(mask)
 
 inliers_image = merger.merge_inliers(action)
