@@ -9,7 +9,7 @@ class Encoder(nn.Module):
 		# 16 x 16 @ 4  (input shape)
 		self.encoder_cnn = nn.Sequential(
 			# 8 x 8 @ 8
-			nn.Conv2d(4, 8, 3, stride=2, padding=1),
+			nn.Conv2d(4, 8, 3, stride=2, padding=0),
 			nn.BatchNorm2d(8),
 			nn.ReLU(True),
 
@@ -24,7 +24,7 @@ class Encoder(nn.Module):
 			nn.ReLU(True),
 
 			# 1 x 1 @ 64  (output shape)
-			nn.Conv2d(32, 64, 3, stride=1, padding=1),
+			nn.Conv2d(32, 64, 3, stride=2, padding=1),
 			nn.BatchNorm2d(64),
 			nn.ReLU(True),
 		)

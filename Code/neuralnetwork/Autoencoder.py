@@ -10,11 +10,9 @@ class Autoencoder(nn.Module):
 
 		# Convolutional section
 		self.encoder = Encoder()
-		self.latent = nn.Conv2d(64, 64, 3, stride=1, padding=1)
 		self.decoder = Decoder()
 
 	def forward(self, x):
 		x = self.encoder(x)
-		x = self.latent(x)
 		x = self.decoder(x)
 		return x
