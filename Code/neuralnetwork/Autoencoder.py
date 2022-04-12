@@ -7,7 +7,6 @@ class Autoencoder(nn.Module):
 
 	def __init__(self):
 		super().__init__()
-
 		# Convolutional section
 		self.encoder = Encoder()
 		self.decoder = Decoder()

@@ -26,9 +26,14 @@ class Encoder(nn.Module):
 			# 1 x 1 @ 64  (output shape)
 			nn.Conv2d(32, 64, 3, stride=2, padding=1),
 			nn.BatchNorm2d(64),
-			nn.ReLU(True),
+		)
+
+		self.latent = nn.Sequential(
+			nn.Linear(in_features=64, out_features=64), nn.ReLU(True)
 		)
 
 	def forward(self, x):
 		x = self.encoder_cnn(x)
+		x = x.view(x.size()[0], -1)
+		x = self.latent(x)
 		return x

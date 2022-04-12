@@ -1,4 +1,5 @@
-from neuralnetwork.Autoencoder import Autoencoder
+from neuralnetwork.Encoder import Encoder
+from neuralnetwork.Siamese import Siamese
 from torchsummary import summary
 
-summary(Autoencoder(), (4, 17, 17))
+summary(Siamese(), [(4, 17, 17), (4, 17, 17)])
