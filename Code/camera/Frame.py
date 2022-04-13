@@ -10,6 +10,7 @@ import open3d as o3d
 from PIL import Image
 
 # In-project imports
+from cv2 import KeyPoint
 from open3d.cpu.pybind.camera import PinholeCameraIntrinsic, PrimeSenseDefault
 from open3d.cpu.pybind.geometry import PointCloud
 
@@ -26,8 +27,8 @@ class Frame(ProjectObject):
 		self.__color_path = color_path
 		self.__depth_path = depth_path
 		self.__index = img_index
-		self.key_points = None
-		self.descriptors = None
+		self.key_points: list[KeyPoint] = None
+		self.descriptors: list = None
 		self.epi_lines = None
 		self.points = []
 		self.inliers = []

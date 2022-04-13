@@ -8,28 +8,20 @@ Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
-# Python imports
 from typing import Tuple
 
-# External imports
 import numpy as np
 import open3d as o3d
 import matplotlib.pyplot as plt
+from PIL.Image import Image
+from open3d.cpu.pybind.geometry import PointCloud
 
-from PIL import Image
-
-# Project imports
 from camera.Frame import Frame
 from camera.Action import Action
 from camera.Recording import Recording
 from ProjectObject import ProjectObject
+from tools.Merger import Merger
 from utils.transformation_utils import get_4x4_transform_from_translation
-
-visualization = o3d.visualization
-PinholeCameraIntrinsic = o3d.camera.PinholeCameraIntrinsic
-RGBDImage = o3d.geometry.RGBDImage
-PrimeSenseDefault = o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault
-PointCloud = o3d.geometry.PointCloud
 	
 
 class Visualizer(ProjectObject):
@@ -175,14 +167,32 @@ class Visualizer(ProjectObject):
 		:return:
 			None
 		"""
-		if registration_method not in ["icp"]:
-			raise ValueError("Registration method not present")
+		ACCEPTED_REGISTRATION = ["icp", "rgb_to_3d", "pose"]
+		if registration_method not in ACCEPTED_REGISTRATION:
+			raise ValueError("Registration method not present. It must be one "
+							 "of %s" % ACCEPTED_REGISTRATION)
 		
-		transformation_from_2_to_1 = self.action.roto_translation_with_icp(0.02,
-																		   verbose=verbose)
+		# Compute the transformations
+		if registration_method == "icp":
+			t_from_2_to_1 = self.action.roto_translation_with_icp(0.02,
+																  verbose=verbose)
+		elif registration_method == "rgb_to_3d":
+			merger = Merger(num_features=5000,
+							detector_method="ORB",
+							matcher_method="FLANN")
+			merge_image = merger.merge_action(self.action)
+			t_from_2_to_1 = self.action.roto_translation_estimation_3d(verbose=verbose)
+		else:
+			t_from_2_to_0, t_from_1_to_0 = self.action.roto_translation_pose(verbose=verbose)
+			# Sanity check to avoid 4 lines more in checking conditions
+			t_from_2_to_1 = t_from_2_to_0
+		
 		frame_1_point_cloud = self.action.first.get_point_cloud()
 		frame_2_point_cloud = self.action.second.get_point_cloud()
-		frame_2_point_cloud.transform(transformation_from_2_to_1)
+		frame_2_point_cloud.transform(t_from_2_to_1)
+		
+		if registration_method == "pose":
+			frame_1_point_cloud.transform(t_from_1_to_0)
 		
 		if not original_color:
 			if color1 is not None:

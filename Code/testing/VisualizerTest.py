@@ -38,8 +38,8 @@ def view_actions_one_at_a_time(start, stop, step) -> None:
 		
 		print("Action %s and action %s" % (i, i+step))
 
-first = 40
-second = 60
+first = 0
+second = 30
 frame1 = Frame("../../Dataset/Colors/00" + get_str(first) + "-color.png",
 			  "../../Dataset/Depths/00" + get_str(first) + "-depth.png",
 			  first)
@@ -57,5 +57,5 @@ vw = Visualizer(frame1, action, recording)
 
 #vw.plot_image_and_depth()
 #vw.plot_frame_point_cloud()
-#vw.plot_action_point_cloud(color1=np.array([255, 0, 204]), color2=np.array([255, 166, 0]))
+vw.plot_action_point_cloud(original_color=True, registration_method="rgb_to_3d", color1=np.array([255, 0, 204]), color2=np.array([255, 166, 0]))
 #vw.plot_recording_point_cloud()
