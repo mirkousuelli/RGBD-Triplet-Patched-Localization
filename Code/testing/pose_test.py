@@ -85,13 +85,25 @@ def show_epipolar_lines(
 	return np.concatenate((img1, img2), axis=1)
 
 
+def pose_difference(
+		frame_1: Frame,
+		frame_2: Frame
+):
+	diff = [0.0] * 7
+	for i in range(0, 4):
+		diff[i] = frame_2.pose[i] * frame_1.pose[i] * (-1 if i > 0 else 1)
+	for i in range(4, 7):
+		diff[i] = frame_2.pose[i] - frame_1.pose[i]
+	return np.array(diff)
+
+
 img_1 = Frame(
-	"../../Dataset/Colors/00000-color.png",
-	"../../Dataset/Depths/00000-depth.png", 0
+	"../../Dataset/Colors/00080-color.png",
+	"../../Dataset/Depths/00080-depth.png", 80
 )
 img_2 = Frame(
-	"../../Dataset/Colors/00060-color.png",
-	"../../Dataset/Depths/00060-depth.png", 60
+	"../../Dataset/Colors/00010-color.png",
+	"../../Dataset/Depths/00010-depth.png", 10
 )
 
 act = Action(img_1, img_2)
@@ -101,7 +113,10 @@ merger = Merger(num_features=5000,
 
 merge_image = merger.merge_action(act)
 
+img_1.extract_pose()
 print(img_2.extract_pose())
+img_2.pose = pose_difference(img_1, img_2)
+print(img_2.pose)
 print(img_2.from_pose_to_rototrasl())
 
 act.f_matrix, _ = act.compute_fundamental_matrix(inplace=False)
