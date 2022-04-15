@@ -162,12 +162,14 @@ class Action(ProjectObject):
 		
 		# first frame
 		self.first.epi_lines = cv2.computeCorrespondEpilines(
-			self.second.inliers.reshape(-1, 1, 2), 2, self.f_matrix)
+			self.second.inliers.reshape(-1, 1, 2), 2, self.f_matrix
+		)
 		self.first.epi_lines = self.first.epi_lines.reshape(-1, 3)
 		
 		# second frame
 		self.second.epi_lines = cv2.computeCorrespondEpilines(
-			self.first.inliers.reshape(-1, 1, 2), 1, self.f_matrix)
+			self.first.inliers.reshape(-1, 1, 2), 1, self.f_matrix
+		)
 		self.second.epi_lines = self.second.epi_lines.reshape(-1, 3)
 	
 	def __draw_epipolar_lines(self,
@@ -544,3 +546,4 @@ class Action(ProjectObject):
 										q[0].flatten().squeeze(),
 										q[1].flatten().squeeze(),
 										q[2].flatten().squeeze()))).squeeze()
+
