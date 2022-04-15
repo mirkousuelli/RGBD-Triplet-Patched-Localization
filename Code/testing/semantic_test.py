@@ -7,10 +7,10 @@ from tools.Merger import Merger
 from tools.SemanticSampling import SemanticSampling
 
 # image loading
-img_1 = Frame("../../Dataset/Colors/00000-color.png",
-              "../../Dataset/Depths/00000-depth.png", 0)
-img_2 = Frame("../../Dataset/Colors/00060-color.png",
-              "../../Dataset/Depths/00060-depth.png", 60)
+img_1 = Frame("../../Dataset/Testing/2/Colors/00000-color.png",
+              "../../Dataset/Testing/2/Depths/00000-depth.png", 0)
+img_2 = Frame("../../Dataset/Testing/2/Colors/00060-color.png",
+              "../../Dataset/Testing/2/Depths/00060-depth.png", 60)
 action = Action(img_1, img_2)
 
 # objects initialization

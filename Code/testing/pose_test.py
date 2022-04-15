@@ -98,12 +98,12 @@ def pose_difference(
 
 
 img_1 = Frame(
-	"../../Dataset/Colors/00080-color.png",
-	"../../Dataset/Depths/00080-depth.png", 80
+	"../../Dataset/Testing/2/Colors/00080-color.png",
+	"../../Dataset/Testing/2/Depths/00080-depth.png", 80
 )
 img_2 = Frame(
-	"../../Dataset/Colors/00010-color.png",
-	"../../Dataset/Depths/00010-depth.png", 10
+	"../../Dataset/Testing/2/Colors/00010-color.png",
+	"../../Dataset/Testing/2/Depths/00010-depth.png", 10
 )
 
 act = Action(img_1, img_2)

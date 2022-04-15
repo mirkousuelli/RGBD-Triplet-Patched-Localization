@@ -54,7 +54,8 @@ class Frame(ProjectObject):
 		:rtype: np.ndarray
 		"""
 		camera_dir = os.path.dirname(__file__)
-		file_path = os.path.join(camera_dir, '../../Dataset/Poses/02.pose')
+		file_path = os.path.join(camera_dir,
+		                         '../../Dataset/Testing/2/Poses/02.pose')
 		self.pose = linecache.getline(file_path, self.__index + 1)
 		self.pose = self.pose.split(" ")[:-1]
 		self.pose = np.array(self.pose, dtype=float)
