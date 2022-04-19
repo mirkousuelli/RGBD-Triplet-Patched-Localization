@@ -33,7 +33,9 @@ class Action(ProjectObject):
 		# Matches
 		self.matches = None
 		self.links: list[DMatch] = None
+		"""The queryIdx is about the first frame and trainIdx is about the second"""
 		self.links_inliers: list[DMatch] = []
+		"""The queryIdx is about the first frame and trainIdx is about the second"""
 		
 		# Fundamental Matrix
 		self.f_matrix = None

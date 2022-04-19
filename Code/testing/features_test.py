@@ -11,10 +11,10 @@ from utils.utils import get_str
 
 first = 0
 second = 60
-img_1 = Frame("../../Dataset/Colors/00" + get_str(first) + "-color.png",
-              "../../Dataset/Depths/00" + get_str(first) + "-depth.png", first)
-img_2 = Frame("../../Dataset/Colors/00" + get_str(second) + "-color.png",
-              "../../Dataset/Depths/00" + get_str(second) + "-depth.png", second)
+img_1 = Frame("../../Dataset/Testing/2/Colors/00" + get_str(first) + "-color.png",
+              "../../Dataset/Testing/2/Depths/00" + get_str(first) + "-depth.png", first)
+img_2 = Frame("../../Dataset/Testing/2/Colors/00" + get_str(second) + "-color.png",
+              "../../Dataset/Testing/2/Depths/00" + get_str(second) + "-depth.png", second)
 action = Action(img_1, img_2)
 
 print("Figure ", action.first._Frame__color_path, " and figure ", action.second._Frame__color_path)

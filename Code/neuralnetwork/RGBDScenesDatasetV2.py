@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+from cv2 import DMatch
 from torch.utils.data import Dataset
 
 from camera.Action import Action
@@ -79,18 +80,28 @@ class RGBDScenesDatasetV2(Dataset):
 		:return:
 			The feature extracted for which we need to get the triplet patches.
 		"""
-		pass
+		if num_samples < 1:
+			raise ValueError("The number of samples must be greater than 0.")
+		
+		rng = np.random.default_rng(22)
+		matches = action.links_inliers
+		num_samples = num_samples if num_samples < len(matches) else len(matches)
+		selected_features = rng.choice(len(matches), num_samples, replace=False)
+		features = [action.first.key_points[matches[x].queryIdx] for x in selected_features]
+		
+		return self.__get_triplet_coords(action,
+										 features)
 	
 	def __get_triplet_coords(self, action: Action,
-							 feature) -> Tuple:
+							 features: list) -> Tuple:
 		"""Gets the coordinates of the triplet patches.
 		
 		:param action:
 			The action from which the coordinates of the patches must be
 			retrieved.
 		
-		:param feature:
-			The feature from which we want to compute the positive and negative
+		:param features:
+			The features from which we want to compute the positive and negative
 			examples for the triplet loss.
 		
 		:return:
