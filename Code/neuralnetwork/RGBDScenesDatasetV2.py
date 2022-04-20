@@ -1,7 +1,7 @@
 from typing import Tuple
 
 import numpy as np
-from cv2 import DMatch
+from cv2 import DMatch, KeyPoint
 from torch.utils.data import Dataset
 
 from camera.Action import Action
@@ -93,7 +93,7 @@ class RGBDScenesDatasetV2(Dataset):
 										 features)
 	
 	def __get_triplet_coords(self, action: Action,
-							 features: list) -> Tuple:
+							 features: list[KeyPoint]) -> np.ndarray:
 		"""Gets the coordinates of the triplet patches.
 		
 		:param action:
@@ -105,10 +105,40 @@ class RGBDScenesDatasetV2(Dataset):
 			examples for the triplet loss.
 		
 		:return:
-			A tuple containing the coordinates of Anchor, Positive and Negative
-			in this order.
+			A list of triplets containing the coordinates of Anchor, Positive
+			and Negative in this order.
 		"""
-		pass
+		# I get all the keypoints of the first image and of the second image
+		first_keys = [key.pt
+					  for key in features]
+		first_keys = [np.array([pt[0], pt[1], 1])
+					  for pt in first_keys.copy()]
+		first_keys = np.array(first_keys)
+		
+		second_keys = [key.pt
+					   for key in action.second.key_points]
+		second_keys = [np.array([pt[0], pt[1], 1])
+					   for pt in second_keys.copy()]
+		second_keys = np.array(second_keys)
+		
+		# I find all the transformed points using the fundamental matrix
+		triplets = []
+		for key_point in first_keys:
+			x1Fx2 = [key_point @ action.f_matrix @ np.transpose(key2)
+					 for key2 in second_keys]
+			x1Fx2 = np.absolute(x1Fx2)
+			pos_idx = np.argmin(x1Fx2)
+			neg_idx = np.argmax(x1Fx2)
+			
+			# I add the triplet anchor-positive-negative to the triplets list
+			triplets.append(np.array([key_point,
+									  second_keys[pos_idx],
+									  second_keys[neg_idx]]))
+		
+		# I convert the triplet list to a numpy array
+		triplets = np.array(triplets)
+	
+		return triplets
 	
 	def __extract_patch(self, action: Action,
 						patch_side: int,
