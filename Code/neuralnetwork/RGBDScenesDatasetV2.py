@@ -93,7 +93,7 @@ class RGBDScenesDatasetV2(Dataset):
 										 features)
 	
 	def __get_triplet_coords(self, action: Action,
-							 features: list[KeyPoint]) -> np.ndarray:
+							 features: list[KeyPoint]):
 		"""Gets the coordinates of the triplet patches.
 		
 		:param action:
@@ -138,13 +138,13 @@ class RGBDScenesDatasetV2(Dataset):
 		# I convert the triplet list to a numpy array
 		triplets = np.array(triplets)
 	
-		return triplets
+		return self.__extract_patch(action,
+									8,
+									triplets)
 	
 	def __extract_patch(self, action: Action,
 						patch_side: int,
-						anchor: np.ndarray,
-						positive: np.ndarray,
-						negative: np.ndarray) -> Tuple:
+						triplets: np.ndarray):
 		"""Extracts the patches given the triplet.
 		
 		:param action:
@@ -153,16 +153,59 @@ class RGBDScenesDatasetV2(Dataset):
 		:param patch_side:
 			The dimension of one patch side.
 		
-		:param anchor:
-			Coordinates of the anchor patch.
-		
-		:param positive:
-			Coordinates of the positive patch.
-		
-		:param negative:
-			Coordinates of the negative patch.
+		:param triplets:
+			The list of all the triplets from which patches must be extracted.
+			Triplets must be ordered as Anchor-Positive-Negative.
 		
 		:return:
-			The patches relative
+			The patches relative to the Anchor-Positive-Negative elements
+			returned as a numpy array of shape (n_samples, 3, 2*patch_side + 1,
+			2*patch_side + 1, 4)
 		"""
-		pass
+		# I extract all the patches
+		# I extract all the patches
+		patches = []
+		for triplet in triplets:
+			# Get rgb and depth for both images
+			first_rgbd = action.first.get_rgbd_image()
+			first_color = np.asarray(first_rgbd.color)
+			first_depth = np.asarray(first_rgbd.depth)
+			second_rgbd = action.second.get_rgbd_image()
+			second_color = np.asarray(second_rgbd.color)
+			second_depth = np.asarray(second_rgbd.depth)
+			w = first_color.shape[1]
+			h = first_color.shape[0]
+			
+			triplet_patch = []
+			for idx, coord in enumerate(triplet):
+				patch = np.zeros((1 + 2 * patch_side, 1 + 2 * patch_side, 4))
+				xc = coord[0]
+				yc = coord[1]
+				
+				# Iterate taking care of border cases
+				for x_off in range(2 * patch_side + 1):
+					for y_off in range(2 * patch_side + 1):
+						xo = int(max(0, min(xc - patch_side,
+											w - 1 - 2 * patch_side)) + x_off)
+						yo = int(max(0, min(yc - patch_side,
+											h - 1 - 2 * patch_side)) + y_off)
+						if idx == 0:
+							color_img = first_color
+							depth_img = first_depth
+						else:
+							color_img = second_color
+							depth_img = second_depth
+						
+						patch[y_off, x_off, 0] = color_img[yo, xo, 0]
+						patch[y_off, x_off, 1] = color_img[yo, xo, 1]
+						patch[y_off, x_off, 2] = color_img[yo, xo, 2]
+						patch[y_off, x_off, 3] = depth_img[yo, xo]
+				
+				triplet_patch.append(patch)
+			
+			triplet_patch = np.array(triplet_patch)
+			patches.append(triplet_patch)
+		
+		patches = np.array(patches)
+		
+		return patches
