@@ -49,6 +49,7 @@ class Action(ProjectObject):
 		# Roto-Translation
 		self.R = None
 		self.t = None
+		self.pose = None
 	
 	def normalize_essential_matrix(self):
 		"""Normalizes the essential matrix"""
@@ -549,3 +550,15 @@ class Action(ProjectObject):
 										q[1].flatten().squeeze(),
 										q[2].flatten().squeeze()))).squeeze()
 
+	def pose_difference(
+		self
+	):
+		diff = [0.0] * 7
+		for i in range(0, 4):
+			diff[i] = self.second.pose[i] * self.first.pose[i] * (-1 if i > 0 else 1)
+		for i in range(4, 7):
+			diff[i] = self.second.pose[i] - self.first.pose[i]
+
+		self.pose = np.array(diff)
+
+		return self.pose

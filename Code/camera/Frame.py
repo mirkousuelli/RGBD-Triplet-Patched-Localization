@@ -14,7 +14,7 @@ from cv2 import KeyPoint
 from open3d.cpu.pybind.camera import PinholeCameraIntrinsic, PrimeSenseDefault
 from open3d.cpu.pybind.geometry import PointCloud
 
-from ProjectObject import ProjectObject
+from Code.ProjectObject import ProjectObject
 
 
 class Frame(ProjectObject):
@@ -27,14 +27,14 @@ class Frame(ProjectObject):
 		self.__color_path = color_path
 		self.__depth_path = depth_path
 		self.__index = img_index
-		self.key_points: list[KeyPoint] = None
-		self.descriptors: list = None
+		self.key_points = None  #: list[KeyPoint] = None
+		self.descriptors = None  # : list = None
 		self.epi_lines = None
 		self.points = []
 		self.inliers = []
 		self.key_points_inliers = []
 		self.descriptors_inliers = np.array([], dtype=np.uint8)
-		self.pose = None
+		self.pose = self.extract_pose()
 		self.R = None
 		self.t = None
 		self.f_matrix = None
@@ -54,6 +54,7 @@ class Frame(ProjectObject):
 		:rtype: np.ndarray
 		"""
 		camera_dir = os.path.dirname(__file__)
+		# TODO : da cambiare per renderlo funzionante per tutte le sotto cartelle
 		file_path = os.path.join(camera_dir,
 		                         '../../Dataset/Testing/2/Poses/02.pose')
 		self.pose = linecache.getline(file_path, self.__index + 1)

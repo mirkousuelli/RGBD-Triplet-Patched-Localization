@@ -1,16 +1,20 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 from cv2 import DMatch, KeyPoint
 from torch.utils.data import Dataset
 
-from camera.Action import Action
+from Code.camera import Action
 
 
 class RGBDScenesDatasetV2(Dataset):
 	"""RGBDScenesDatasetV2 pytorch object to be able to train a NN on it."""
-	
-	def __init__(self):
+
+	TRAINING = "Training"
+	VALIDATION = "Validation"
+	TESTING = "Testing"
+
+	def __init__(self, root):
 		super().__init__()
 
 	def __len__(self):
@@ -20,7 +24,7 @@ class RGBDScenesDatasetV2(Dataset):
 			The length in terms of number of items of the dataset.
 		"""
 		pass
-	
+
 	def __getitem__(self, idx):
 		"""Gets the item of the dataset at the specified index.
 		
@@ -33,8 +37,8 @@ class RGBDScenesDatasetV2(Dataset):
 		pass
 
 	def __load_item(self, idx: int,
-					shift_window: int = 60,
-					num_shift: float = 0.8):
+	                shift_window: int = 60,
+	                num_shift: float = 0.8):
 		"""Gets the action from the dataset based on the index.
 		
 		:param idx:
@@ -52,7 +56,7 @@ class RGBDScenesDatasetV2(Dataset):
 			The action at the specified index.
 		"""
 		pass
-	
+
 	def __get_fundamental_matrix(self, action: Action) -> np.ndarray:
 		"""Gets the fundamental matrix from the given action.
 		
@@ -63,9 +67,9 @@ class RGBDScenesDatasetV2(Dataset):
 			The fundamental matrix as ndarray of shape (3,3).
 		"""
 		pass
-	
+
 	def __feature_detection(self, action: Action,
-							num_samples: int):
+	                        num_samples: int):
 		"""Select the features to be used for training.
 		
 		To extract the features, a pseudo-random number generator with seed is
@@ -82,18 +86,20 @@ class RGBDScenesDatasetV2(Dataset):
 		"""
 		if num_samples < 1:
 			raise ValueError("The number of samples must be greater than 0.")
-		
+
 		rng = np.random.default_rng(22)
 		matches = action.links_inliers
-		num_samples = num_samples if num_samples < len(matches) else len(matches)
+		num_samples = num_samples if num_samples < len(matches) else len(
+			matches)
 		selected_features = rng.choice(len(matches), num_samples, replace=False)
-		features = [action.first.key_points[matches[x].queryIdx] for x in selected_features]
-		
+		features = [action.first.key_points[matches[x].queryIdx] for x in
+		            selected_features]
+
 		return self.__get_triplet_coords(action,
-										 features)
-	
+		                                 features)
+
 	def __get_triplet_coords(self, action: Action,
-							 features: list[KeyPoint]):
+	                         features: List[KeyPoint]):
 		"""Gets the coordinates of the triplet patches.
 		
 		:param action:
@@ -110,41 +116,41 @@ class RGBDScenesDatasetV2(Dataset):
 		"""
 		# I get all the keypoints of the first image and of the second image
 		first_keys = [key.pt
-					  for key in features]
+		              for key in features]
 		first_keys = [np.array([pt[0], pt[1], 1])
-					  for pt in first_keys.copy()]
+		              for pt in first_keys.copy()]
 		first_keys = np.array(first_keys)
-		
+
 		second_keys = [key.pt
-					   for key in action.second.key_points]
+		               for key in action.second.key_points]
 		second_keys = [np.array([pt[0], pt[1], 1])
-					   for pt in second_keys.copy()]
+		               for pt in second_keys.copy()]
 		second_keys = np.array(second_keys)
-		
+
 		# I find all the transformed points using the fundamental matrix
 		triplets = []
 		for key_point in first_keys:
 			x1Fx2 = [key_point @ action.f_matrix @ np.transpose(key2)
-					 for key2 in second_keys]
+			         for key2 in second_keys]
 			x1Fx2 = np.absolute(x1Fx2)
 			pos_idx = np.argmin(x1Fx2)
 			neg_idx = np.argmax(x1Fx2)
-			
+
 			# I add the triplet anchor-positive-negative to the triplets list
 			triplets.append(np.array([key_point,
-									  second_keys[pos_idx],
-									  second_keys[neg_idx]]))
-		
+			                          second_keys[pos_idx],
+			                          second_keys[neg_idx]]))
+
 		# I convert the triplet list to a numpy array
 		triplets = np.array(triplets)
-	
+
 		return self.__extract_patch(action,
-									8,
-									triplets)
-	
+		                            8,
+		                            triplets)
+
 	def __extract_patch(self, action: Action,
-						patch_side: int,
-						triplets: np.ndarray):
+	                    patch_side: int,
+	                    triplets: np.ndarray):
 		"""Extracts the patches given the triplet.
 		
 		:param action:
@@ -175,37 +181,37 @@ class RGBDScenesDatasetV2(Dataset):
 			second_depth = np.asarray(second_rgbd.depth)
 			w = first_color.shape[1]
 			h = first_color.shape[0]
-			
+
 			triplet_patch = []
 			for idx, coord in enumerate(triplet):
 				patch = np.zeros((1 + 2 * patch_side, 1 + 2 * patch_side, 4))
 				xc = coord[0]
 				yc = coord[1]
-				
+
 				# Iterate taking care of border cases
 				for x_off in range(2 * patch_side + 1):
 					for y_off in range(2 * patch_side + 1):
 						xo = int(max(0, min(xc - patch_side,
-											w - 1 - 2 * patch_side)) + x_off)
+						                    w - 1 - 2 * patch_side)) + x_off)
 						yo = int(max(0, min(yc - patch_side,
-											h - 1 - 2 * patch_side)) + y_off)
+						                    h - 1 - 2 * patch_side)) + y_off)
 						if idx == 0:
 							color_img = first_color
 							depth_img = first_depth
 						else:
 							color_img = second_color
 							depth_img = second_depth
-						
+
 						patch[y_off, x_off, 0] = color_img[yo, xo, 0]
 						patch[y_off, x_off, 1] = color_img[yo, xo, 1]
 						patch[y_off, x_off, 2] = color_img[yo, xo, 2]
 						patch[y_off, x_off, 3] = depth_img[yo, xo]
-				
+
 				triplet_patch.append(patch)
-			
+
 			triplet_patch = np.array(triplet_patch)
 			patches.append(triplet_patch)
-		
+
 		patches = np.array(patches)
-		
+
 		return patches
