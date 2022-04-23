@@ -53,7 +53,6 @@ def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, met
             if target is not None:
                 target = target.cuda()
 
-
         optimizer.zero_grad()
         outputs = model(*data)
 

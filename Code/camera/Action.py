@@ -553,6 +553,13 @@ class Action(ProjectObject):
 	def pose_difference(
 		self
 	):
+		"""
+		Compute the new pose with respect to the two frames' poses expressed
+		in quaternions.
+
+		:return:
+			The pose with respect to the two frames
+		"""
 		diff = [0.0] * 7
 		for i in range(0, 4):
 			diff[i] = self.second.pose[i] * self.first.pose[i] * (-1 if i > 0 else 1)
@@ -562,3 +569,54 @@ class Action(ProjectObject):
 		self.pose = np.array(diff)
 
 		return self.pose
+
+	def from_pose_to_rototrasl(
+		self
+	):
+		q = np.ndarray([])
+		q = np.append(q, -self.pose[1])
+		q = np.append(q, -self.pose[2])
+		q = np.append(q, -self.pose[3])
+		q = np.append(q, -self.pose[0])
+		self.t = self.pose[4:]
+
+		s = sum(i ** 2 for i in q) ** (-2)
+
+		# First row of the rotation matrix
+		r00 = 1 - 2 * s * (q[2] ** 2 + q[3] ** 2)
+		r01 = 2 * s * (q[1] * q[2] - q[0] * q[3])
+		r02 = 2 * s * (q[1] * q[3] + q[0] * q[2])
+
+		# Second row of the rotation matrix
+		r10 = 2 * s * (q[1] * q[2] + q[0] * q[3])
+		r11 = 1 - 2 * s * (q[1] ** 2 + q[3] ** 2)
+		r12 = 2 * s * (q[2] * q[3] - q[0] * q[1])
+
+		# Third row of the rotation matrix
+		r20 = 2 * s * (q[1] * q[3] - q[0] * q[2])
+		r21 = 2 * s * (q[2] * q[3] + q[0] * q[1])
+		r22 = 1 - 2 * s * (q[1] ** 2 + q[2] ** 2)
+
+		self.R = np.mat(
+			[[r00, r01, r02],
+			 [r10, r11, r12],
+			 [r20, r21, r22]], dtype=float
+		)
+		self.R /= self.R[2, 2]
+
+		# 3x3 rotation matrix
+		return self.R, self.t
+
+	def from_rototrasl_to_f_matrix(
+		self
+	):
+		K = self.first.calibration_matrix()
+		A = K @ self.R.T @ self.t
+		C = np.mat(
+			[[0.0, -A[0, 2], +A[0, 1]],
+			 [+A[0, 2], 0.0, -A[0, 0]],
+			 [-A[0, 1], +A[0, 0], 0.0]], dtype=float
+		)
+		self.f_matrix = np.linalg.inv(K).T @ self.R @ K.T @ C
+		self.f_matrix /= self.f_matrix[2, 2]
+		return self.f_matrix

@@ -1,11 +1,15 @@
 from typing import Tuple, List
 
 import os
+import random
 import numpy as np
 from cv2 import KeyPoint
 from torch.utils.data import Dataset
 
-from Code.camera import Action
+from Code.camera.Frame import Frame
+from Code.camera.Action import Action
+from Code.tools.Detector import Detector
+from Code.utils.utils import *
 
 
 class RGBDTripletLocalizationDataset(Dataset):
@@ -26,6 +30,8 @@ class RGBDTripletLocalizationDataset(Dataset):
 		scale=1.0,
 		shift=10,
 		random_dist=60,
+		num_features=32,
+		detector_method="ORB"
 	):
 		"""
 		RGB-D Triplet Localization Dataset constructor.
@@ -56,11 +62,16 @@ class RGBDTripletLocalizationDataset(Dataset):
 		"""
 		super().__init__()
 
-		# root reference
+		# hyper-parameters
 		self.root = root
 		self.scale = scale
 		self.shift = shift
 		self.random_dist = random_dist
+		self.num_features = num_features
+		self.curr_mode = self.TRAINING
+
+		# Detector initialization
+		self.detector = Detector(self.num_features, detector_method)
 
 		# initialize two source dictionary both for reference and support frames
 		self.reference_dict = {}
@@ -77,6 +88,7 @@ class RGBDTripletLocalizationDataset(Dataset):
 
 		# list used as reference to store the training scene keys order
 		self.training_order_keys = []
+		self.curr_scene = 0
 
 		# subdirectories populations for the dataset main folders scenes
 		for sub in list(iter(self.reference_dict)):
@@ -115,8 +127,10 @@ class RGBDTripletLocalizationDataset(Dataset):
 				if sub in self.SUPPORT:
 					self.support_dict[sub][scene] = []
 
-				# adding the images of the scene based on the shift and scale limits
-				for num in range(1, int(self.max_common_size * self.scale), self.shift):
+				# adding the images of the scene based on the shift and scale
+				# limits
+				for num in range(1, int(self.max_common_size * self.scale),
+				                 self.shift):
 					# reference standard append done in straight order
 					self.reference_dict[sub][scene].append(num)
 
@@ -131,7 +145,8 @@ class RGBDTripletLocalizationDataset(Dataset):
 							if num + self.random_dist < self.max_common_size \
 							else self.max_common_size
 
-						# finally append by picking an image between the two bounds
+						# finally append by picking an image between the two
+						# bounds
 						self.support_dict[sub][scene].append(
 							np.random.randint(lb, ub)
 						)
@@ -153,82 +168,128 @@ class RGBDTripletLocalizationDataset(Dataset):
 		:return:
 			The item at index idx of the dataset and its target.
 		"""
-		patch_anchor, patch_pos, patch_neg = [], [], []  # self.__extract_patch()
+		# pre-conditions
+		assert 0 < index < self.__len__(), "Index out of bounds in the dataset!"
+
+		# load the corresponding reference-support pair based on the index
+		action = self.__load_item(index)
+
+		# fetch the triplet patches
+		patch_anchor, patch_pos, patch_neg = self.__get_triplet_coords(action)
+
+		# update the scene
+		self.__scene_update(index)
 
 		# return triplet patches
 		return (patch_anchor, patch_pos, patch_neg), []
 
-	def __load_item(self, idx: int):
+	def set_mode(
+		self,
+		new_mode
+	):
+		"""
+		Change the dataset mode between Training, Validation and Testing.
+
+		:param new_mode:
+			Must be 'Training', 'Validation', 'Testing'
+		"""
+		assert new_mode in [self.TRAINING, self.VALIDATION, self.TESTING], \
+			"No existent mode selected!"
+		self.curr_mode = new_mode
+
+	def __scene_update(
+		self,
+		index
+	):
+		"""
+		Scene update during training at the end of the scrolling;
+		The scene will be updated based on the current random order.
+
+		:param index:
+			current index
+		"""
+		if index == self.__len__() - 1 and self.curr_mode == self.TRAINING:
+			if self.curr_scene == self.training_order_keys[-1]:
+				random.shuffle(self.training_order_keys)
+				self.curr_scene = self.training_order_keys[0]
+			else:
+				self.curr_scene = self.training_order_keys[
+					self.training_order_keys.index(self.curr_scene) + 1
+				]
+
+	def __load_item(self, index: int):
 		"""Gets the action from the dataset based on the index.
 		
-		:param idx:
+		:param index:
 			The index of the first frame to be considered.
 			
 		:return:
 			The action at the specified index.
 		"""
-		pass
+		# index retrieval through the dictionaries
+		reference = self.reference_dict[self.curr_mode][self.curr_scene][index]
+		support = self.support_dict[self.curr_mode][self.curr_scene][index]
 
-	def __get_fundamental_matrix(self, action: Action) -> np.ndarray:
-		"""Gets the fundamental matrix from the given action.
-		
-		:param action:
-			The action on which we must compute the fundamental matrix.
-		
-		:return:
-			The fundamental matrix as ndarray of shape (3,3).
-		"""
-		pass
+		# frames initializations
+		frame_reference = Frame(
+			get_rgb_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene, reference
+			),
+			get_depth_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene, reference
+			),
+			get_pose_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene
+			),
+			reference
+		)
+		frame_support = Frame(
+			get_rgb_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene, support
+			),
+			get_depth_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene, support
+			),
+			get_pose_triplet_dataset_path(
+				self.root, self.curr_mode, self.curr_scene
+			),
+			support
+		)
 
-	def __feature_detection(self, action: Action,
-	                        num_samples: int):
-		"""Select the features to be used for training.
-		
-		To extract the features, a pseudo-random number generator with seed is
-		used such that the experiments over this dataset are reproducible.
-		
-		:param action:
-			The action from which the features are extracted.
-		
-		:param num_samples:
-			The number of features to extract from the action.
-		
-		:return:
-			The feature extracted for which we need to get the triplet patches.
-		"""
-		if num_samples < 1:
-			raise ValueError("The number of samples must be greater than 0.")
+		# detect frames' key-points
+		self.detector.detect_and_compute(frame_reference)
+		self.detector.detect_and_compute(frame_support)
 
-		rng = np.random.default_rng(22)
-		matches = action.links_inliers
-		num_samples = num_samples if num_samples < len(matches) else len(
-			matches)
-		selected_features = rng.choice(len(matches), num_samples, replace=False)
-		features = [action.first.key_points[matches[x].queryIdx] for x in
-		            selected_features]
+		# action pose difference estimation
+		action = Action(frame_reference, frame_support)
+		action.pose_difference()
 
-		return self.__get_triplet_coords(action,
-		                                 features)
+		# from pose to roto-translation
+		action.from_pose_to_rototrasl()
 
-	def __get_triplet_coords(self, action: Action,
-	                         features: List[KeyPoint]):
+		# from roto-translation to fundamental matrix
+		action.from_rototrasl_to_f_matrix()
+
+		# return the final ready-to-be-used action
+		return action
+
+	def __get_triplet_coords(
+		self,
+		action: Action
+	):
 		"""Gets the coordinates of the triplet patches.
 		
 		:param action:
 			The action from which the coordinates of the patches must be
 			retrieved.
 		
-		:param features:
-			The features from which we want to compute the positive and negative
-			examples for the triplet loss.
-		
 		:return:
 			A list of triplets containing the coordinates of Anchor, Positive
 			and Negative in this order.
 		"""
-		# I get all the keypoints of the first image and of the second image
+		# I get all the key-points of the first image and of the second image
 		first_keys = [key.pt
-		              for key in features]
+		              for key in action.first.key_points]
 		first_keys = [np.array([pt[0], pt[1], 1])
 		              for pt in first_keys.copy()]
 		first_keys = np.array(first_keys)
@@ -256,13 +317,11 @@ class RGBDTripletLocalizationDataset(Dataset):
 		# I convert the triplet list to a numpy array
 		triplets = np.array(triplets)
 
-		return self.__extract_patch(action,
-		                            8,
-		                            triplets)
+		return self.__extract_patches(action, 8, triplets)
 
-	def __extract_patch(self, action: Action,
-	                    patch_side: int,
-	                    triplets: np.ndarray):
+	def __extract_patches(self, action: Action,
+	                      patch_side: int,
+	                      triplets: np.ndarray):
 		"""Extracts the patches given the triplet.
 		
 		:param action:
