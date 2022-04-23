@@ -1,76 +1,83 @@
 import os
-from _ctypes import PyObj_FromPtr
 import json
-import re
-
-
-class NoIndent(object):
-	""" Value wrapper. """
-
-	def __init__(self, value):
-		self.value = value
-
-
-class MyEncoder(json.JSONEncoder):
-	FORMAT_SPEC = '@@{}@@'
-	regex = re.compile(FORMAT_SPEC.format(r'(\d+)'))
-
-	def __init__(self, **kwargs):
-		# Save copy of any keyword argument values needed for use here.
-		self.__sort_keys = kwargs.get('sort_keys', None)
-		super(MyEncoder, self).__init__(**kwargs)
-
-	def default(self, obj):
-		return (self.FORMAT_SPEC.format(id(obj)) if isinstance(obj, NoIndent)
-		        else super(MyEncoder, self).default(obj))
-
-	def encode(self, obj):
-		format_spec = self.FORMAT_SPEC  # Local var to expedite access.
-		json_repr = super(MyEncoder, self).encode(obj)  # Default JSON.
-
-		# Replace any marked-up object ids in the JSON repr with the
-		# value returned from the json.dumps() of the corresponding
-		# wrapped Python object.
-		for match in self.regex.finditer(json_repr):
-			# see https://stackoverflow.com/a/15012814/355230
-			id = int(match.group(1))
-			no_indent = PyObj_FromPtr(id)
-			json_obj_repr = json.dumps(no_indent.value,
-			                           sort_keys=self.__sort_keys)
-
-			# Replace the matched id string with json formatted representation
-			# of the corresponding Python object.
-			json_repr = json_repr.replace(
-				'"{}"'.format(format_spec.format(id)), json_obj_repr)
-
-		return json_repr
+import numpy as np
+import random
 
 
 ROOT = "../../Dataset/"
+TRAINING = "Training"
+VALIDATION = "Validation"
+TESTING = "Testing"
+SUPPORT = [TRAINING, VALIDATION]
 
 print(os.listdir(ROOT))
 
-root_dict = {}
+reference_dict = {}
+support_dict = {}
 
 for sub in os.listdir(ROOT):
-	root_dict[sub] = {}
+	reference_dict[sub] = {}
+	if sub in SUPPORT:
+		support_dict[sub] = {}
 
-print(root_dict)
+print(reference_dict)
+print(support_dict)
 
-for sub in list(iter(root_dict)):
+training_order_keys = []
+for sub in list(iter(reference_dict)):
 	for scene in os.listdir(ROOT + sub):
-		root_dict[sub][scene] = {}
+		reference_dict[sub][scene] = {}
+		if sub in SUPPORT:
+			support_dict[sub][scene] = {}
+			if sub == TRAINING:
+				training_order_keys.append(scene)
+print(training_order_keys)
 
-print(root_dict)
+print(reference_dict)
+print(support_dict)
 
-for sub in list(iter(root_dict)):
+max_common_size = 5000
+for sub in list(iter(reference_dict)):
 	for scene in os.listdir(ROOT + sub):
-		root_dict[sub][scene] = list(range(
-			len(os.listdir(ROOT + sub + '/' + scene + '/Colors'))
-		))
+		max_common_size = min(
+			max_common_size, len(os.listdir(ROOT + sub + '/' + scene + '/Colors'))
+		)
+print("max: ", max_common_size)
 
-print(root_dict)
+scale = 1.0
+shift = 10
+random_distance = 60
+for sub in list(iter(reference_dict)):
+	for scene in os.listdir(ROOT + sub):
+		reference_dict[sub][scene] = []
+		if sub in SUPPORT:
+			support_dict[sub][scene] = []
+		for num in range(1, int(max_common_size * scale), shift):
+			reference_dict[sub][scene].append(num)
+			if sub in SUPPORT:
+				lb = num - random_distance if num - random_distance > 0 else 0
+				ub = num + random_distance if num + random_distance < max_common_size \
+					else max_common_size
+				support_dict[sub][scene].append(np.random.randint(lb, ub))
 
-with open('data.json', 'w') as fp:
-	out = json.dump(root_dict, fp, cls=MyEncoder, sort_keys=True, indent=2)
-	re.sub(r'",\s+', '", ', out)
+print(reference_dict)
+print(support_dict)
+
+for epoch_step in range(max_common_size // shift + 1):
+	print("EPOCH STEP: ", epoch_step)
+	random.shuffle(training_order_keys)
+	print("random shuffle: ", training_order_keys)
+	for scene in training_order_keys:
+		reference_dict[TRAINING][scene].pop()
+		support_dict[TRAINING][scene].pop()
+	print(reference_dict)
+	print(support_dict)
+	print()
+
+write = False
+if write:
+	with open('reference.json', 'w') as fp:
+		json.dump(reference_dict, fp, sort_keys=True, indent=2)
+
+	with open('support.json', 'w') as fp:
+		json.dump(support_dict, fp, sort_keys=True, indent=2)

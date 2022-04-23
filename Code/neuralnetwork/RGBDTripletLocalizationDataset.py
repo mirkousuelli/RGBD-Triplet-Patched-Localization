@@ -1,21 +1,140 @@
 from typing import Tuple, List
 
+import os
 import numpy as np
-from cv2 import DMatch, KeyPoint
+from cv2 import KeyPoint
 from torch.utils.data import Dataset
 
 from Code.camera import Action
 
 
-class RGBDScenesDatasetV2(Dataset):
-	"""RGBDScenesDatasetV2 pytorch object to be able to train a NN on it."""
+class RGBDTripletLocalizationDataset(Dataset):
+	"""
+	RGB-D Triplet Localization Dataset as pytorch object being able to train
+	a NN on it.
+	"""
 
+	# constants
 	TRAINING = "Training"
 	VALIDATION = "Validation"
 	TESTING = "Testing"
+	SUPPORT = [TRAINING, VALIDATION]
 
-	def __init__(self, root):
+	def __init__(
+		self,
+		root,
+		scale=1.0,
+		shift=10,
+		random_dist=60,
+	):
+		"""
+		RGB-D Triplet Localization Dataset constructor.
+
+		:param root:
+			Dataset path string root
+		:type root: str
+
+		:param scale:
+			In order to maintain a stratified sampling training it is assumed
+			to bound the image scenes with the minimum populated ones. This
+			parameter allows to further limit this amount by imposing a
+			percentage on it (1.0 == 100% : use the maximum stratified sampling
+			capability)
+		:type scale: int
+
+		:param shift:
+			Since the training could take a lot of time and closer images are
+			identical, this parameter allows to skip through the scenes folders
+			with a certain shift rate among frames.
+		:type shift:
+
+		:param random_dist:
+			In order to randomize the reference-support frame pairs choice, we
+			set a symmetrical bounds over the current frame which allows to pick
+			a random number around it.
+		:type random_dist: int
+		"""
 		super().__init__()
+
+		# root reference
+		self.root = root
+		self.scale = scale
+		self.shift = shift
+		self.random_dist = random_dist
+
+		# initialize two source dictionary both for reference and support frames
+		self.reference_dict = {}
+		self.support_dict = {}
+
+		# subdirectories populations for the dataset main folders
+		for sub in os.listdir(self.root):
+			# the reference has both Training, Validation, Testing
+			self.reference_dict[sub] = {}
+
+			# the support does not have Testing as Triplet training definition
+			if sub in self.SUPPORT:
+				self.support_dict[sub] = {}
+
+		# list used as reference to store the training scene keys order
+		self.training_order_keys = []
+
+		# subdirectories populations for the dataset main folders scenes
+		for sub in list(iter(self.reference_dict)):
+			for scene in os.listdir(self.root + sub):
+				# the reference has both Training, Validation, Testing
+				self.reference_dict[sub][scene] = {}
+
+				# the support does not have Testing as Triplet training
+				# definition
+				if sub in self.SUPPORT:
+					self.support_dict[sub][scene] = {}
+
+					# keep track of the training keys for the scenes
+					if sub == self.TRAINING:
+						self.training_order_keys.append(scene)
+
+		# in order to maintain a stratified sampling procedure at training time
+		# we set up a common maximum bound about the size of the frames per
+		# scenes to be processed while learning in training
+		self.max_common_size = 5000
+		for sub in list(iter(self.reference_dict)):
+			for scene in os.listdir(self.root + sub):
+				# update the max common size based on the minimum one
+				self.max_common_size = min(
+					self.max_common_size,
+					len(os.listdir(self.root + sub + '/' + scene + '/Colors'))
+				)
+
+		# populate all the subdirectories with scene indexes
+		for sub in list(iter(self.reference_dict)):
+			for scene in os.listdir(self.root + sub):
+				# reference list initialization for each scene
+				self.reference_dict[sub][scene] = []
+
+				# doing the same for the support
+				if sub in self.SUPPORT:
+					self.support_dict[sub][scene] = []
+
+				# adding the images of the scene based on the shift and scale limits
+				for num in range(1, int(self.max_common_size * self.scale), self.shift):
+					# reference standard append done in straight order
+					self.reference_dict[sub][scene].append(num)
+
+					# reference non-standard append done in random order
+					if sub in self.SUPPORT:
+						# random lower bound
+						lb = num - self.random_dist \
+							if num - self.random_dist > 0 else 0
+
+						# random upper bound
+						ub = num + self.random_dist \
+							if num + self.random_dist < self.max_common_size \
+							else self.max_common_size
+
+						# finally append by picking an image between the two bounds
+						self.support_dict[sub][scene].append(
+							np.random.randint(lb, ub)
+						)
 
 	def __len__(self):
 		"""Gets the dimension of the dataset.
@@ -23,34 +142,27 @@ class RGBDScenesDatasetV2(Dataset):
 		:return:
 			The length in terms of number of items of the dataset.
 		"""
-		pass
+		return self.max_common_size
 
-	def __getitem__(self, idx):
+	def __getitem__(self, index):
 		"""Gets the item of the dataset at the specified index.
 		
-		:param idx:
+		:param index:
 			Index of the item to get.
 		 
 		:return:
 			The item at index idx of the dataset and its target.
 		"""
-		pass
+		patch_anchor, patch_pos, patch_neg = [], [], []  # self.__extract_patch()
 
-	def __load_item(self, idx: int,
-	                shift_window: int = 60,
-	                num_shift: float = 0.8):
+		# return triplet patches
+		return (patch_anchor, patch_pos, patch_neg), []
+
+	def __load_item(self, idx: int):
 		"""Gets the action from the dataset based on the index.
 		
 		:param idx:
 			The index of the first frame to be considered.
-		
-		:param shift_window:
-			The dimension of the shift window to use to draw a random frame to
-			be used as second image.
-		
-		# TODO: penso che non sia un nome molto intuitivo, vedi tu
-		:param num_shift:
-			The fraction of shifts to perform on a scene set.
 			
 		:return:
 			The action at the specified index.
