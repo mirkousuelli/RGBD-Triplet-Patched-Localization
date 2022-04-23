@@ -1,13 +1,25 @@
 from torch import nn
 
 
-class Encoder(nn.Module):
+class RGBD_PatchEncoder(nn.Module):
+	"""
+	RGB-D Patch Encoder
+	Convolutional Neural Network which takes as input a 4@16x16 path from
+	an RGB-D image and encodes an embedding of the input batch expressed as
+	a latent vector.
+	"""
 
-	def __init__(self):
-		super().__init__()
+	def __init__(
+		self
+	):
+		"""
+		Constructor composed of a CNN-Encoder and a Latent layer.
+		"""
+		super(RGBD_PatchEncoder, self).__init__()
 
 		# 16 x 16 @ 4  (input shape)
 		self.encoder_cnn = nn.Sequential(
+
 			# 8 x 8 @ 8
 			nn.Conv2d(4, 8, 3, stride=2, padding=0),
 			nn.BatchNorm2d(8),
@@ -28,12 +40,25 @@ class Encoder(nn.Module):
 			nn.BatchNorm2d(64),
 		)
 
+		# latent layer vector
 		self.latent = nn.Sequential(
 			nn.Linear(in_features=64, out_features=64), nn.ReLU(True)
 		)
 
-	def forward(self, x):
+	def forward(
+		self,
+		x
+	):
+		"""
+		:param x:
+			Patch RGB-D image of size [4 @ 16 x 16] as input
+
+		:return:
+			Latent embedded representation
+		"""
 		x = self.encoder_cnn(x)
 		x = x.view(x.size()[0], -1)
 		x = self.latent(x)
+
+		# 1 x 64
 		return x

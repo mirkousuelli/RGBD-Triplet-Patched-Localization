@@ -1,9 +1,10 @@
-from camera.Frame import Frame
-from camera.Action import Action
+from Code.camera.Frame import Frame
+from Code.camera.Action import Action
 import numpy as np
 import cv2
 
-from tools.Merger import Merger
+from Code.utils.utils import *
+from Code.tools.Merger import Merger
 
 
 def compute_epipolar_lines_opencv(
@@ -98,12 +99,16 @@ def pose_difference(
 
 
 img_1 = Frame(
-	"../../Dataset/Testing/2/Colors/00080-color.png",
-	"../../Dataset/Testing/2/Depths/00080-depth.png", 80
+	get_rgb_triplet_dataset_path("../../Dataset", "Testing", 2, 80),
+	get_depth_triplet_dataset_path("../../Dataset", "Testing", 2, 80),
+	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
+	80
 )
 img_2 = Frame(
-	"../../Dataset/Testing/2/Colors/00010-color.png",
-	"../../Dataset/Testing/2/Depths/00010-depth.png", 10
+	get_rgb_triplet_dataset_path("../../Dataset", "Testing", 2, 10),
+	get_depth_triplet_dataset_path("../../Dataset", "Testing", 2, 10),
+	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
+	10
 )
 
 act = Action(img_1, img_2)

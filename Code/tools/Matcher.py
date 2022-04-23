@@ -11,8 +11,8 @@ University : Politecnico di Milano - A.Y. 2021/2022
 import cv2
 import numpy as np
 
-from camera.Frame import Frame
-from camera.Action import Action
+from Code.camera.Frame import Frame
+from Code.camera.Action import Action
 
 
 class Matcher:

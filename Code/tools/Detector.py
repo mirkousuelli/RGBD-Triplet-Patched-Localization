@@ -10,7 +10,7 @@ University : Politecnico di Milano - A.Y. 2021/2022
 """
 import cv2
 
-from camera.Frame import Frame
+from Code.camera.Frame import Frame
 
 
 class Detector:

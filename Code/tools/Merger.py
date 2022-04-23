@@ -8,10 +8,10 @@ Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
-from camera.Frame import Frame
-from camera.Action import Action
-from tools.Detector import Detector
-from tools.Matcher import Matcher
+from Code.camera.Frame import Frame
+from Code.camera.Action import Action
+from Code.tools.Detector import Detector
+from Code.tools.Matcher import Matcher
 
 
 class Merger:

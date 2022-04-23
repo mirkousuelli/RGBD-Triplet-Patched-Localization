@@ -11,7 +11,7 @@ University : Politecnico di Milano - A.Y. 2021/2022
 import numpy as np
 import scipy
 
-from camera.Action import Action
+from Code.camera.Action import Action
 
 
 class SemanticSampling:

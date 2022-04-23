@@ -280,7 +280,7 @@ class RGBDTripletLocalizationDataset(Dataset):
 			returned as a numpy array of shape (n_samples, 3, 2*patch_side + 1,
 			2*patch_side + 1, 4)
 		"""
-		# I extract all the patches
+
 		# I extract all the patches
 		patches = []
 		for triplet in triplets:

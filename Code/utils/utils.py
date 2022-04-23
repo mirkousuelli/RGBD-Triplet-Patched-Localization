@@ -10,9 +10,33 @@ def get_str(num) -> str:
 		The string representing the number.
 	:rtype str:
 	"""
-	if num < 10:
-		return "00" + str(num)
-	elif 10 <= num < 100:
-		return "0" + str(num)
-	else:
-		return str(num)
+	return ("0" + str(num)) if num < 10 else str(num)
+
+
+def get_rgb_triplet_dataset_path(
+	root,
+	folder,
+	scene,
+	num
+) -> str:
+	return root + '/' + folder + '/' + str(scene) + "/Colors/000" + \
+	       get_str(num) + "-color.png"
+
+
+def get_depth_triplet_dataset_path(
+	root,
+	folder,
+	scene,
+	num
+) -> str:
+	return root + '/' + folder + '/' + str(scene) + "/Depths/000" + \
+	       get_str(num) + "-depth.png"
+
+
+def get_pose_triplet_dataset_path(
+	root,
+	folder,
+	scene
+) -> str:
+	return root + '/' + folder + '/' + str(scene) + "/Poses/" + \
+	       get_str(scene) + ".pose"

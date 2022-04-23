@@ -8,9 +8,9 @@ from open3d.cpu.pybind.pipelines.registration import registration_icp, \
 	TransformationEstimationPointToPoint, evaluate_registration, \
 	ICPConvergenceCriteria, TransformationEstimationPointToPlane
 
-from camera.Frame import Frame
-from ProjectObject import ProjectObject
-from utils.transformation_utils import get_4x4_transform_from_quaternion, \
+from Code.camera.Frame import Frame
+from Code.ProjectObject import ProjectObject
+from Code.utils.transformation_utils import get_4x4_transform_from_quaternion, \
 	get_4x4_transform_from_translation, find_3d_affine
 
 

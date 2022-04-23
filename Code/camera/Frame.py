@@ -20,12 +20,17 @@ from Code.ProjectObject import ProjectObject
 class Frame(ProjectObject):
 	ERROR_KEY = ProjectObject.ERROR_KEY + ["frame"]
 
-	def __init__(self, color_path: str,
-				 depth_path: str,
-				 img_index: int):
+	def __init__(
+		self,
+	    color_path: str,
+		depth_path: str,
+		pose_path: str,
+		img_index: int
+	):
 		super().__init__()
 		self.__color_path = color_path
 		self.__depth_path = depth_path
+		self.__pose_path = pose_path
 		self.__index = img_index
 		self.key_points = None  #: list[KeyPoint] = None
 		self.descriptors = None  # : list = None
@@ -54,10 +59,9 @@ class Frame(ProjectObject):
 		:rtype: np.ndarray
 		"""
 		camera_dir = os.path.dirname(__file__)
-		# TODO : da cambiare per renderlo funzionante per tutte le sotto cartelle
-		file_path = os.path.join(camera_dir,
-		                         '../../Dataset/Testing/2/Poses/02.pose')
-		self.pose = linecache.getline(file_path, self.__index + 1)
+
+		file_path = os.path.join(camera_dir, self.__pose_path)
+		self.pose = linecache.getline(file_path, self.__index - 1)
 		self.pose = self.pose.split(" ")[:-1]
 		self.pose = np.array(self.pose, dtype=float)
 		return self.pose
@@ -113,9 +117,9 @@ class Frame(ProjectObject):
 		self.f_matrix /= self.f_matrix[2, 2]
 		return self.f_matrix
 
-	def get_pil_images(self, ret : str = None) -> Union[Image.Image,
-	                                                    Tuple[Image.Image,
-	                                                          Image.Image]]:
+	def get_pil_images(self, ret: str = None) -> Union[Image.Image,
+	                                                   Tuple[Image.Image,
+	                                                         Image.Image]]:
 		"""Return the PIL images of color and depth.
 		:param ret:
 			Specified whether to return one or both the images.
@@ -133,9 +137,9 @@ class Frame(ProjectObject):
 		elif ret == "depth":
 			return Image.open(self.__depth_path)
 
-	def get_o3d_images(self, ret : str = None) -> Union[o3d.geometry.Image,
-	                                                    Tuple[o3d.geometry.Image,
-	                                                          o3d.geometry.Image]]:
+	def get_o3d_images(self, ret: str = None) -> Union[o3d.geometry.Image,
+	                                                   Tuple[o3d.geometry.Image,
+	                                                         o3d.geometry.Image]]:
 		"""Return the open3d images of color and depth.
 		:param ret:
 			Specified whether to return one or both the images.
