@@ -36,8 +36,8 @@ class RGBD_PatchEncoder(nn.Module):
 			nn.ReLU(True),
 
 			# 1 x 1 @ 64  (output shape)
-			nn.Conv2d(32, 64, 3, stride=2, padding=1),
-			nn.BatchNorm2d(64),
+			nn.Conv2d(32, 64, 3, stride=2, padding=1)#,
+			#nn.BatchNorm2d(64),
 		)
 
 		# latent layer vector
@@ -51,7 +51,7 @@ class RGBD_PatchEncoder(nn.Module):
 	):
 		"""
 		:param x:
-			Patch RGB-D image of size [4 @ 16 x 16] as input
+			Patch RGB-D image of size [4 @ 17 x 17] as input
 
 		:return:
 			Latent embedded representation

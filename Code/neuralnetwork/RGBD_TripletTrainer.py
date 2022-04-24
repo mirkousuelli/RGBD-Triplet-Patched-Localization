@@ -80,28 +80,34 @@ def train_epoch(
             if target is not None:
                 target = target.cuda()
 
-        optimizer.zero_grad()
-        outputs = model(*data)
+        prova_len = len(data[0])
+        for feature_idx in range(prova_len):
+            anchor = data[0][feature_idx].float()
+            pos = data[1][feature_idx].float()
+            neg = data[2][feature_idx].float()
 
-        if type(outputs) not in (tuple, list):
-            outputs = (outputs,)
+            optimizer.zero_grad()
+            outputs = model(anchor, pos, neg)
 
-        loss_inputs = outputs
-        if target is not None:
-            target = (target,)
-            loss_inputs += target
+            if type(outputs) not in (tuple, list):
+                outputs = (outputs,)
 
-        loss_outputs = loss_fn(*loss_inputs)
-        loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else\
-            loss_outputs
-        losses.append(loss.item())
-        total_loss += loss.item()
-        total_batches += 1
-        loss.backward()
-        optimizer.step()
+            loss_inputs = outputs
+            if target is not None:
+                target = (target,)
+                loss_inputs += target
 
-        for metric in metrics:
-            metric(outputs, target, loss_outputs)
+            loss_outputs = loss_fn(*loss_inputs)
+            loss = loss_outputs[0] if type(loss_outputs) in (tuple, list) else\
+                loss_outputs
+            losses.append(loss.item())
+            total_loss += loss.item()
+            total_batches += 1
+            loss.backward()
+            optimizer.step()
+
+            for metric in metrics:
+                metric(outputs, target, loss_outputs)
 
         if batch_idx % log_interval == 0:
             message = BATCH_MESSAGE.format(

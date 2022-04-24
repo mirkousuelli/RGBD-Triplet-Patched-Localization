@@ -20,7 +20,7 @@ class RGBD_TripletNetwork(nn.Module):
         :type encoder: nn.Module
         """
         super(RGBD_TripletNetwork, self).__init__()
-        self.encoder = encoder
+        self.encoder = encoder.float()
 
     def forward(
         self,
@@ -30,13 +30,13 @@ class RGBD_TripletNetwork(nn.Module):
     ):
         """
         :param patch_anchor:
-            Anchor sample patch [4 @ 16 x 16]
+            Anchor sample patch [4 @ 17 x 17]
 
         :param patch_pos:
-            Positive sample patch [4 @ 16 x 16]
+            Positive sample patch [4 @ 17 x 17]
 
         :param patch_neg:
-            Negative sample patch [4 @ 16 x 16]
+            Negative sample patch [4 @ 17 x 17]
 
         :return:
             Anchor, Positive and Negative latent representations

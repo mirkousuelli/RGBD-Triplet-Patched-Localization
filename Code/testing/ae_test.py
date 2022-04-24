@@ -1,5 +1,4 @@
-from neuralnetwork.Encoder import Encoder
-from neuralnetwork.Siamese import Siamese
+from Code.neuralnetwork.RGBD_PatchEncoder import RGBD_PatchEncoder
 from torchsummary import summary
 
-summary(Siamese(), [(4, 17, 17), (4, 17, 17)])
+summary(RGBD_PatchEncoder(), (4, 17, 17))

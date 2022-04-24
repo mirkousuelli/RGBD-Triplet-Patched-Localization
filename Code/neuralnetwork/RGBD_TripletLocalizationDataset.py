@@ -1,6 +1,7 @@
 import os
 import random
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 
 from Code.camera.Frame import Frame
@@ -45,13 +46,13 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			parameter allows to further limit this amount by imposing a
 			percentage on it (1.0 == 100% : use the maximum stratified sampling
 			capability)
-		:type scale: int
+		:type scale: float
 
 		:param shift:
 			Since the training could take a lot of time and closer images are
 			identical, this parameter allows to skip through the scenes folders
 			with a certain shift rate among frames.
-		:type shift:
+		:type shift: int
 
 		:param random_dist:
 			In order to randomize the reference-support frame pairs choice, we
@@ -71,6 +72,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		self.shift = shift
 		self.random_dist = random_dist
 		self.num_features = num_features
+		self.folder_len = 0
 
 		# Detector initialization
 		self.detector = Detector(self.num_features, detector_method)
@@ -88,9 +90,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 
 		# list used as reference to store the training scene keys order
 		self.order_keys = []
-		self.curr_scene_idx = 0
 
-		for scene in os.listdir(self.root + self.mode):
+		for scene in os.listdir(self.root + '/' + self.mode):
 			# the reference has both Training, Validation, Testing
 			self.reference_dict[self.mode][scene] = {}
 
@@ -102,19 +103,22 @@ class RGBD_TripletLocalizationDataset(Dataset):
 				# keep track of the training keys for the scenes
 				self.order_keys.append(scene)
 
+		# setting the first order index key
+		self.curr_scene_idx = self.order_keys[0]
+
 		# in order to maintain a stratified sampling procedure at training time
 		# we set up a common maximum bound about the size of the frames per
 		# scenes to be processed while learning in training
 		self.max_common_size = 5000  # 5000 is an arbitrary high number
-		for scene in os.listdir(self.root + self.mode):
+		for scene in os.listdir(self.root + '/' + self.mode):
 			# update the max common size based on the minimum one
 			self.max_common_size = min(
 				self.max_common_size,
-				len(os.listdir(self.root + self.mode + '/' + scene + '/Colors'))
+				len(os.listdir(self.root + '/' + self.mode + '/' + scene + '/Colors'))
 			)
 
 		# random pair matching reference-support
-		for scene in os.listdir(self.root + self.mode):
+		for scene in os.listdir(self.root + '/' + self.mode):
 			# reference list initialization for each scene
 			self.reference_dict[self.mode][scene] = []
 
@@ -146,6 +150,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 						np.random.randint(lb, ub)
 					)
 
+		self.folder_len = len(self.reference_dict[self.mode][self.curr_scene_idx])
+
 	def __len__(self):
 		"""
 		Gets the dimension of the dataset.
@@ -153,7 +159,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		:return:
 			The length in terms of number of items of the dataset.
 		"""
-		return self.max_common_size
+		return self.folder_len
 
 	def __getitem__(self, index):
 		"""
@@ -166,7 +172,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			The item at index idx of the dataset and its target.
 		"""
 		# pre-conditions
-		assert 0 < index < self.__len__(), "Index out of bounds in the dataset!"
+		assert 0 <= index < self.__len__(), "Index out of bounds in the dataset!"
 
 		# load the corresponding reference-support pair based on the index
 		action = self.__load_item(index)
@@ -175,7 +181,12 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		self.__scene_update(index)
 
 		# fetch and return triplet patches
-		return (self.__get_triplet(action)), []
+		return self.__get_triplet(action), []
+
+	def num_scenes(
+		self
+	):
+		return len(self.order_keys)
 
 	def __scene_update(
 			self,
@@ -189,7 +200,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			current index of the scene frame
 		"""
 		# if the image index has reach the end
-		if index == self.__len__() - 1:
+		if index >= self.__len__() - 1:
 
 			# if the scene index correspond to the last one
 			if self.curr_scene_idx == self.order_keys[-1]:
@@ -240,13 +251,13 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		)
 		frame_support = Frame(
 			get_rgb_triplet_dataset_path(
-				self.root, self.mode, self.curr_scene_idx, support
+				self.root, self.mode, int(self.curr_scene_idx), support
 			),
 			get_depth_triplet_dataset_path(
-				self.root, self.mode, self.curr_scene_idx, support
+				self.root, self.mode, int(self.curr_scene_idx), support
 			),
 			get_pose_triplet_dataset_path(
-				self.root, self.mode, self.curr_scene_idx
+				self.root, self.mode, int(self.curr_scene_idx)
 			),
 			support
 		)
@@ -358,9 +369,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			w = first_color.shape[1]
 			h = first_color.shape[0]
 
-			anchor_patch, positive_patch, negative_patch = [], [], []
 			for idx, coord in enumerate(triplet):
-				patch = np.zeros((1 + 2 * patch_side, 1 + 2 * patch_side, 4))
+				patch = np.zeros((4, 1 + 2 * patch_side, 1 + 2 * patch_side))
 				xc = coord[0]
 				yc = coord[1]
 
@@ -378,28 +388,16 @@ class RGBD_TripletLocalizationDataset(Dataset):
 							color_img = second_color
 							depth_img = second_depth
 
-						patch[y_off, x_off, 0] = color_img[yo, xo, 0]
-						patch[y_off, x_off, 1] = color_img[yo, xo, 1]
-						patch[y_off, x_off, 2] = color_img[yo, xo, 2]
-						patch[y_off, x_off, 3] = depth_img[yo, xo]
+						patch[0, y_off, x_off] = color_img[yo, xo, 0]
+						patch[1, y_off, x_off] = color_img[yo, xo, 1]
+						patch[2, y_off, x_off] = color_img[yo, xo, 2]
+						patch[3, y_off, x_off] = depth_img[yo, xo]
 
 				if idx == 0:
-					anchor_patch.append(patch)
+					anchor_patches.append(torch.from_numpy(patch))
 				elif idx == 1:
-					positive_patch.append(patch)
+					positive_patches.append(torch.from_numpy(patch))
 				elif idx == 2:
-					negative_patch.append(patch)
-
-			anchor_patch = np.array(anchor_patch)
-			positive_patch = np.array(positive_patch)
-			negative_patch = np.array(negative_patch)
-
-			anchor_patches.append(anchor_patch)
-			positive_patches.append(positive_patch)
-			negative_patches.append(negative_patch)
-
-		anchor_patches = np.array(anchor_patches)
-		positive_patches = np.array(positive_patches)
-		negative_patches = np.array(negative_patches)
+					negative_patches.append(torch.from_numpy(patch))
 
 		return anchor_patches, positive_patches, negative_patches

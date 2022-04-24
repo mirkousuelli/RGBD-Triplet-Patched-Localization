@@ -13,13 +13,14 @@ class RGBD_TripletLoss(nn.Module):
 
     def __init__(
         self,
-        alpha=0.0
+        alpha=1.
     ):
         """
         Constructor which takes just a hyperparameter.
 
         :param alpha:
             Loss mitigation hyperparameter
+        :type alpha: float
         """
 
         super(RGBD_TripletLoss, self).__init__()
