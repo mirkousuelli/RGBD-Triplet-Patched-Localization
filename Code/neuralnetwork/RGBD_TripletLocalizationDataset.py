@@ -1,9 +1,6 @@
-from typing import Tuple, List
-
 import os
 import random
 import numpy as np
-from cv2 import KeyPoint
 from torch.utils.data import Dataset
 
 from Code.camera.Frame import Frame
@@ -12,7 +9,7 @@ from Code.tools.Detector import Detector
 from Code.utils.utils import *
 
 
-class RGBDTripletLocalizationDataset(Dataset):
+class RGBD_TripletLocalizationDataset(Dataset):
 	"""
 	RGB-D Triplet Localization Dataset as pytorch object being able to train
 	a NN on it.
@@ -23,15 +20,17 @@ class RGBDTripletLocalizationDataset(Dataset):
 	VALIDATION = "Validation"
 	TESTING = "Testing"
 	SUPPORT = [TRAINING, VALIDATION]
+	MODES = [TRAINING, VALIDATION, TESTING]
 
 	def __init__(
-		self,
-		root,
-		scale=1.0,
-		shift=10,
-		random_dist=60,
-		num_features=32,
-		detector_method="ORB"
+			self,
+			root,
+			mode=TRAINING,
+			scale=1.0,
+			shift=10,
+			random_dist=60,
+			num_features=32,
+			detector_method="ORB"
 	):
 		"""
 		RGB-D Triplet Localization Dataset constructor.
@@ -60,15 +59,18 @@ class RGBDTripletLocalizationDataset(Dataset):
 			a random number around it.
 		:type random_dist: int
 		"""
-		super().__init__()
+		# pre-conditions
+		assert mode in self.MODES, "Error dataset mode! Choose among [%s]" %\
+		                           ', '.join(map(str, self.MODES))
+		super(RGBD_TripletLocalizationDataset).__init__()
 
 		# hyper-parameters
 		self.root = root
+		self.mode = mode
 		self.scale = scale
 		self.shift = shift
 		self.random_dist = random_dist
 		self.num_features = num_features
-		self.curr_mode = self.TRAINING
 
 		# Detector initialization
 		self.detector = Detector(self.num_features, detector_method)
@@ -77,82 +79,76 @@ class RGBDTripletLocalizationDataset(Dataset):
 		self.reference_dict = {}
 		self.support_dict = {}
 
-		# subdirectories populations for the dataset main folders
-		for sub in os.listdir(self.root):
-			# the reference has both Training, Validation, Testing
-			self.reference_dict[sub] = {}
+		# the reference has the mode folder (i.e. Training, Validation, Testing)
+		self.reference_dict[self.mode] = {}
 
-			# the support does not have Testing as Triplet training definition
-			if sub in self.SUPPORT:
-				self.support_dict[sub] = {}
+		# the support does not have Testing as Triplet training definition
+		if self.mode in self.SUPPORT:
+			self.support_dict[self.mode] = {}
 
 		# list used as reference to store the training scene keys order
-		self.training_order_keys = []
-		self.curr_scene = 0
+		self.order_keys = []
+		self.curr_scene_idx = 0
 
-		# subdirectories populations for the dataset main folders scenes
-		for sub in list(iter(self.reference_dict)):
-			for scene in os.listdir(self.root + sub):
-				# the reference has both Training, Validation, Testing
-				self.reference_dict[sub][scene] = {}
+		for scene in os.listdir(self.root + self.mode):
+			# the reference has both Training, Validation, Testing
+			self.reference_dict[self.mode][scene] = {}
 
-				# the support does not have Testing as Triplet training
-				# definition
-				if sub in self.SUPPORT:
-					self.support_dict[sub][scene] = {}
+			# the support does not have Testing as Triplet training
+			# definition
+			if self.mode in self.SUPPORT:
+				self.support_dict[self.mode][scene] = {}
 
-					# keep track of the training keys for the scenes
-					if sub == self.TRAINING:
-						self.training_order_keys.append(scene)
+				# keep track of the training keys for the scenes
+				self.order_keys.append(scene)
 
 		# in order to maintain a stratified sampling procedure at training time
 		# we set up a common maximum bound about the size of the frames per
 		# scenes to be processed while learning in training
-		self.max_common_size = 5000
-		for sub in list(iter(self.reference_dict)):
-			for scene in os.listdir(self.root + sub):
-				# update the max common size based on the minimum one
-				self.max_common_size = min(
-					self.max_common_size,
-					len(os.listdir(self.root + sub + '/' + scene + '/Colors'))
-				)
+		self.max_common_size = 5000  # 5000 is an arbitrary high number
+		for scene in os.listdir(self.root + self.mode):
+			# update the max common size based on the minimum one
+			self.max_common_size = min(
+				self.max_common_size,
+				len(os.listdir(self.root + self.mode + '/' + scene + '/Colors'))
+			)
 
-		# populate all the subdirectories with scene indexes
-		for sub in list(iter(self.reference_dict)):
-			for scene in os.listdir(self.root + sub):
-				# reference list initialization for each scene
-				self.reference_dict[sub][scene] = []
+		# random pair matching reference-support
+		for scene in os.listdir(self.root + self.mode):
+			# reference list initialization for each scene
+			self.reference_dict[self.mode][scene] = []
 
-				# doing the same for the support
-				if sub in self.SUPPORT:
-					self.support_dict[sub][scene] = []
+			# doing the same for the support
+			if self.mode in self.SUPPORT:
+				self.support_dict[self.mode][scene] = []
 
-				# adding the images of the scene based on the shift and scale
-				# limits
-				for num in range(1, int(self.max_common_size * self.scale),
-				                 self.shift):
-					# reference standard append done in straight order
-					self.reference_dict[sub][scene].append(num)
+			# adding the images of the scene based on the shift and scale
+			# limits
+			for num in range(1, int(self.max_common_size * self.scale),
+			                 self.shift):
+				# reference standard append done in straight order
+				self.reference_dict[self.mode][scene].append(num)
 
-					# reference non-standard append done in random order
-					if sub in self.SUPPORT:
-						# random lower bound
-						lb = num - self.random_dist \
-							if num - self.random_dist > 0 else 0
+				# reference non-standard append done in random order
+				if self.mode in self.SUPPORT:
+					# random lower bound
+					lb = num - self.random_dist \
+						if num - self.random_dist > 0 else 0
 
-						# random upper bound
-						ub = num + self.random_dist \
-							if num + self.random_dist < self.max_common_size \
-							else self.max_common_size
+					# random upper bound
+					ub = num + self.random_dist \
+						if num + self.random_dist < self.max_common_size \
+						else self.max_common_size
 
-						# finally append by picking an image between the two
-						# bounds
-						self.support_dict[sub][scene].append(
-							np.random.randint(lb, ub)
-						)
+					# finally append by picking an image between the two
+					# bounds
+					self.support_dict[self.mode][scene].append(
+						np.random.randint(lb, ub)
+					)
 
 	def __len__(self):
-		"""Gets the dimension of the dataset.
+		"""
+		Gets the dimension of the dataset.
 		
 		:return:
 			The length in terms of number of items of the dataset.
@@ -160,7 +156,8 @@ class RGBDTripletLocalizationDataset(Dataset):
 		return self.max_common_size
 
 	def __getitem__(self, index):
-		"""Gets the item of the dataset at the specified index.
+		"""
+		Gets the item of the dataset at the specified index.
 		
 		:param index:
 			Index of the item to get.
@@ -174,51 +171,49 @@ class RGBDTripletLocalizationDataset(Dataset):
 		# load the corresponding reference-support pair based on the index
 		action = self.__load_item(index)
 
-		# fetch the triplet patches
-		patch_anchor, patch_pos, patch_neg = self.__get_triplet_coords(action)
-
 		# update the scene
 		self.__scene_update(index)
 
-		# return triplet patches
-		return (patch_anchor, patch_pos, patch_neg), []
-
-	def set_mode(
-		self,
-		new_mode
-	):
-		"""
-		Change the dataset mode between Training, Validation and Testing.
-
-		:param new_mode:
-			Must be 'Training', 'Validation', 'Testing'
-		"""
-		assert new_mode in [self.TRAINING, self.VALIDATION, self.TESTING], \
-			"No existent mode selected!"
-		self.curr_mode = new_mode
+		# fetch and return triplet patches
+		return (self.__get_triplet(action)), []
 
 	def __scene_update(
-		self,
-		index
+			self,
+			index
 	):
 		"""
 		Scene update during training at the end of the scrolling;
 		The scene will be updated based on the current random order.
 
 		:param index:
-			current index
+			current index of the scene frame
 		"""
-		if index == self.__len__() - 1 and self.curr_mode == self.TRAINING:
-			if self.curr_scene == self.training_order_keys[-1]:
-				random.shuffle(self.training_order_keys)
-				self.curr_scene = self.training_order_keys[0]
+		# if the image index has reach the end
+		if index == self.__len__() - 1:
+
+			# if the scene index correspond to the last one
+			if self.curr_scene_idx == self.order_keys[-1]:
+
+				# if we are in training mode
+				if self.mode == self.TRAINING:
+
+					# then shuffle the training order keys
+					random.shuffle(self.order_keys)
+
+				# set the current scene as the first element
+				self.curr_scene_idx = self.order_keys[0]
+
+			# otherwise if the scene index is not the last one
 			else:
-				self.curr_scene = self.training_order_keys[
-					self.training_order_keys.index(self.curr_scene) + 1
+
+				# scroll the current index upwards
+				self.curr_scene_idx = self.order_keys[
+					self.order_keys.index(self.curr_scene_idx) + 1
 				]
 
 	def __load_item(self, index: int):
-		"""Gets the action from the dataset based on the index.
+		"""
+		Gets the action from the dataset based on the index.
 		
 		:param index:
 			The index of the first frame to be considered.
@@ -227,31 +222,31 @@ class RGBDTripletLocalizationDataset(Dataset):
 			The action at the specified index.
 		"""
 		# index retrieval through the dictionaries
-		reference = self.reference_dict[self.curr_mode][self.curr_scene][index]
-		support = self.support_dict[self.curr_mode][self.curr_scene][index]
+		reference = self.reference_dict[self.mode][self.curr_scene_idx][index]
+		support = self.support_dict[self.mode][self.curr_scene_idx][index]
 
 		# frames initializations
 		frame_reference = Frame(
 			get_rgb_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene, reference
+				self.root, self.mode, self.curr_scene_idx, reference
 			),
 			get_depth_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene, reference
+				self.root, self.mode, self.curr_scene_idx, reference
 			),
 			get_pose_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene
+				self.root, self.mode, self.curr_scene_idx
 			),
 			reference
 		)
 		frame_support = Frame(
 			get_rgb_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene, support
+				self.root, self.mode, self.curr_scene_idx, support
 			),
 			get_depth_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene, support
+				self.root, self.mode, self.curr_scene_idx, support
 			),
 			get_pose_triplet_dataset_path(
-				self.root, self.curr_mode, self.curr_scene
+				self.root, self.mode, self.curr_scene_idx
 			),
 			support
 		)
@@ -273,11 +268,12 @@ class RGBDTripletLocalizationDataset(Dataset):
 		# return the final ready-to-be-used action
 		return action
 
-	def __get_triplet_coords(
-		self,
-		action: Action
+	def __get_triplet(
+			self,
+			action: Action
 	):
-		"""Gets the coordinates of the triplet patches.
+		"""
+		Gets the coordinates of the triplet patches.
 		
 		:param action:
 			The action from which the coordinates of the patches must be
@@ -310,19 +306,28 @@ class RGBDTripletLocalizationDataset(Dataset):
 			neg_idx = np.argmax(x1Fx2)
 
 			# I add the triplet anchor-positive-negative to the triplets list
-			triplets.append(np.array([key_point,
-			                          second_keys[pos_idx],
-			                          second_keys[neg_idx]]))
+			triplets.append(
+				np.array(
+					[key_point,
+					 second_keys[pos_idx],
+					 second_keys[neg_idx]],
+					dtype=np.int32
+				)
+			)
 
 		# I convert the triplet list to a numpy array
 		triplets = np.array(triplets)
 
-		return self.__extract_patches(action, 8, triplets)
+		return self.__extract_triplet_patches(action, 8, triplets)
 
-	def __extract_patches(self, action: Action,
-	                      patch_side: int,
-	                      triplets: np.ndarray):
-		"""Extracts the patches given the triplet.
+	@staticmethod
+	def __extract_triplet_patches(
+		action: Action,
+		patch_side: int,
+		triplets: np.ndarray
+	):
+		"""
+		Extracts the patches given the triplet.
 		
 		:param action:
 			The action from which the patches must be extracted.
@@ -341,7 +346,7 @@ class RGBDTripletLocalizationDataset(Dataset):
 		"""
 
 		# I extract all the patches
-		patches = []
+		anchor_patches, positive_patches, negative_patches = [], [], []
 		for triplet in triplets:
 			# Get rgb and depth for both images
 			first_rgbd = action.first.get_rgbd_image()
@@ -353,7 +358,7 @@ class RGBDTripletLocalizationDataset(Dataset):
 			w = first_color.shape[1]
 			h = first_color.shape[0]
 
-			triplet_patch = []
+			anchor_patch, positive_patch, negative_patch = [], [], []
 			for idx, coord in enumerate(triplet):
 				patch = np.zeros((1 + 2 * patch_side, 1 + 2 * patch_side, 4))
 				xc = coord[0]
@@ -378,11 +383,23 @@ class RGBDTripletLocalizationDataset(Dataset):
 						patch[y_off, x_off, 2] = color_img[yo, xo, 2]
 						patch[y_off, x_off, 3] = depth_img[yo, xo]
 
-				triplet_patch.append(patch)
+				if idx == 0:
+					anchor_patch.append(patch)
+				elif idx == 1:
+					positive_patch.append(patch)
+				elif idx == 2:
+					negative_patch.append(patch)
 
-			triplet_patch = np.array(triplet_patch)
-			patches.append(triplet_patch)
+			anchor_patch = np.array(anchor_patch)
+			positive_patch = np.array(positive_patch)
+			negative_patch = np.array(negative_patch)
 
-		patches = np.array(patches)
+			anchor_patches.append(anchor_patch)
+			positive_patches.append(positive_patch)
+			negative_patches.append(negative_patch)
 
-		return patches
+		anchor_patches = np.array(anchor_patches)
+		positive_patches = np.array(positive_patches)
+		negative_patches = np.array(negative_patches)
+
+		return anchor_patches, positive_patches, negative_patches

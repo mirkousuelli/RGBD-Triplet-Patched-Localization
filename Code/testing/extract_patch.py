@@ -1,21 +1,25 @@
 import numpy as np
 
-from camera.Action import Action
-from camera.Frame import Frame
-from tools.Merger import Merger
-from utils.utils import get_str
+from Code.camera.Action import Action
+from Code.camera.Frame import Frame
+from Code.tools.Merger import Merger
+from Code.utils.utils import *
 
 num_samples = 5
 first = 0
 second = 60
 frame1 = Frame(
-	"../../Dataset/Testing/2/Colors/00" + get_str(first) + "-color.png",
-	"../../Dataset/Testing/2/Depths/00" + get_str(first) + "-depth.png",
-	first)
+	get_rgb_triplet_dataset_path("../../Dataset", "Testing", 2, first),
+	get_depth_triplet_dataset_path("../../Dataset", "Testing", 2, first),
+	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
+	first
+)
 frame2 = Frame(
-	"../../Dataset/Testing/2/Colors/00" + get_str(second) + "-color.png",
-	"../../Dataset/Testing/2/Depths/00" + get_str(second) + "-depth.png",
-	second)
+	get_rgb_triplet_dataset_path("../../Dataset", "Testing", 2, second),
+	get_depth_triplet_dataset_path("../../Dataset", "Testing", 2, second),
+	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
+	second
+)
 action = Action(frame1, frame2)
 
 merger = Merger(num_features=5000,
@@ -74,6 +78,9 @@ patch_side = 8
 ###############################################################
 ###############################################################
 # I extract all the patches
+anchor_patches = []
+positive_patches = []
+negative_patches = []
 patches = []
 for triplet in triplets:
 	# Get rgb and depth for both images
@@ -85,7 +92,10 @@ for triplet in triplets:
 	second_depth = np.asarray(second_rgbd.depth)
 	w = first_color.shape[1]
 	h = first_color.shape[0]
-	
+
+	anchor_patch = []
+	positive_patch = []
+	negative_patch = []
 	triplet_patch = []
 	for idx, coord in enumerate(triplet):
 		patch = np.zeros((1 + 2*patch_side, 1 + 2*patch_side, 4))
@@ -110,10 +120,26 @@ for triplet in triplets:
 				patch[y_off, x_off, 3] = depth_img[yo, xo]
 				
 		triplet_patch.append(patch)
-		
+		if idx == 0:
+			anchor_patch.append(patch)
+		elif idx == 1:
+			positive_patch.append(patch)
+		elif idx == 2:
+			negative_patch.append(patch)
+
+	anchor_patch = np.array(anchor_patch)
+	positive_patch = np.array(positive_patch)
+	negative_patch = np.array(negative_patch)
 	triplet_patch = np.array(triplet_patch)
+
+	anchor_patches.append(anchor_patch)
+	positive_patches.append(positive_patch)
+	negative_patches.append(negative_patch)
 	patches.append(triplet_patch)
-	
+
+anchor_patches = np.array(anchor_patches)
+positive_patches = np.array(positive_patches)
+negative_patches = np.array(negative_patches)
 patches = np.array(patches)
 
 print(patches)
