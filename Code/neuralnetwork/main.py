@@ -59,5 +59,7 @@ fit(
 	optimizer, scheduler, n_epochs, cuda, log_interval
 )
 
-torch.save(model.encoder, "Code/neuralnetwork/model")
+directory = os.path.dirname(__file__)
+file_path = os.path.join(directory, "model/rgbd_triplet_patch_encoder_model.pt")
+torch.save(model.encoder, file_path)
 print("---###@@@$$$!!!! MODEL SAVED !!!$$$$@@@###---")
