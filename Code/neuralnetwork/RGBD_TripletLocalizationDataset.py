@@ -105,6 +105,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 
 		# setting the first order index key
 		self.curr_scene_idx = self.order_keys[0]
+		self.batch_scene_idx = self.curr_scene_idx
 
 		# in order to maintain a stratified sampling procedure at training time
 		# we set up a common maximum bound about the size of the frames per
@@ -174,6 +175,10 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		# pre-conditions
 		assert 0 <= index < self.__len__(), "Index out of bounds in the dataset!"
 
+		# updated afterwards to be correctly visualized
+		# NB. this index is just used for batch information
+		self.batch_scene_idx = self.curr_scene_idx
+
 		# load the corresponding reference-support pair based on the index
 		action = self.__load_item(index)
 
@@ -183,7 +188,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		# fetch and return triplet patches
 		return self.__get_triplet(action), []
 
-	def num_scenes(
+	def get_num_scenes(
 		self
 	):
 		return len(self.order_keys)
