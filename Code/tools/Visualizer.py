@@ -167,7 +167,7 @@ class Visualizer(ProjectObject):
 		:return:
 			None
 		"""
-		ACCEPTED_REGISTRATION = ["icp", "rgb_to_3d", "pose"]
+		ACCEPTED_REGISTRATION = ["icp", "rgb_to_3d", "pose", "standard"]
 		if registration_method not in ACCEPTED_REGISTRATION:
 			raise ValueError("Registration method not present. It must be one "
 							 "of %s" % ACCEPTED_REGISTRATION)
@@ -182,10 +182,18 @@ class Visualizer(ProjectObject):
 							matcher_method="FLANN")
 			merge_image = merger.merge_action(self.action)
 			t_from_2_to_1 = self.action.roto_translation_estimation_3d(verbose=verbose)
-		else:
+		elif registration_method == "pose":
 			t_from_2_to_0, t_from_1_to_0 = self.action.roto_translation_pose(verbose=verbose)
 			# Sanity check to avoid 4 lines more in checking conditions
 			t_from_2_to_1 = t_from_2_to_0
+		else:
+			self.action.roto_translation()
+			R = self.action.R
+			t = self.action.t
+			t_from_2_to_1 = np.array([[R[0,0], R[0,1], R[0, 2], t[0]],
+									  [R[1,0], R[1,1], R[1, 2], t[1]],
+									  [R[2,0], R[2,1], R[2, 2], t[2]],
+									  [0, 0, 0, 1]])
 		
 		frame_1_point_cloud = self.action.first.get_point_cloud()
 		frame_2_point_cloud = self.action.second.get_point_cloud()

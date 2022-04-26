@@ -8,9 +8,9 @@ from open3d.cpu.pybind.pipelines.registration import registration_icp, \
 	TransformationEstimationPointToPoint, evaluate_registration, \
 	ICPConvergenceCriteria, TransformationEstimationPointToPlane
 
-from Code.camera.Frame import Frame
-from Code.ProjectObject import ProjectObject
-from Code.utils.transformation_utils import get_4x4_transform_from_quaternion, \
+from camera.Frame import Frame
+from ProjectObject import ProjectObject
+from utils.transformation_utils import get_4x4_transform_from_quaternion, \
 	get_4x4_transform_from_translation, find_3d_affine
 
 
@@ -50,6 +50,22 @@ class Action(ProjectObject):
 		self.R = None
 		self.t = None
 		self.pose = None
+	
+	def set_fundamental_matrix(self, matrix,
+							   mask) -> None:
+		"""Sets the fundamental matrix.
+		
+		:param matrix:
+			The fundamental matrix to set.
+			
+		:param mask:
+			The mask to set.
+		
+		:return:
+			None.
+		"""
+		self.f_matrix = np.array(matrix)
+		self.f_mask = np.array(mask)
 	
 	def normalize_essential_matrix(self):
 		"""Normalizes the essential matrix"""
