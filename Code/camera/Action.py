@@ -138,6 +138,17 @@ class Action(ProjectObject):
 		for i in range(len(self.links)):
 			if self.f_mask[i].ravel() == 1:
 				self.links_inliers.append(self.links[i])
+
+	def set_inliers(
+		self,
+		new_mask=None
+	):
+		if new_mask is not None:
+			self.f_mask = new_mask
+
+		for i in range(len(self.links)):
+			if self.f_mask[i] == 1:
+				self.links_inliers.append(self.links[i])
 	
 	def compute_essential_matrix(
 			self,

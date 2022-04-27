@@ -13,7 +13,6 @@ from tools.SemanticSampling import SemanticSampling
 from tools.Visualizer import Visualizer
 from utils.utils import get_rgb_triplet_dataset_path, get_pose_triplet_dataset_path, get_depth_triplet_dataset_path
 
-PATCH_SIDE = 8
 DETECTION_METHOD = "ORB"
 first = 0
 second = 60
@@ -37,27 +36,33 @@ frame2 = Frame(
 )
 action = Action(frame1, frame2)
 # Detection is embedded into the Merger class
-pass
 
 # PHASE 2: MATCHING
 # Description: Using an extractor, from the detected features we compose matches
 # between points in images.
 print("# Phase 2: performing matching")
-merger = Merger(num_features=5000,
-				detector_method=DETECTION_METHOD,
-				matcher_method="FLANN")
+merger = Merger(
+	num_features=5000,
+	detector_method=DETECTION_METHOD,
+	matcher_method="FLANN"
+)
 merge_image = merger.merge_action(action)
+cv2.imshow("Matches without DNN-RANSAC", merge_image)
 matches = action.links
-features_1 = [action.first.key_points[matches[x].queryIdx]
-			  for x in range(len(matches))]
-features_2 = [action.second.key_points[matches[x].trainIdx]
-			  for x in range(len(matches))]
+features_1 = [
+	action.first.key_points[matches[x].queryIdx] for x in range(len(matches))
+]
+features_2 = [
+	action.second.key_points[matches[x].trainIdx] for x in range(len(matches))
+]
 
 # I get all the key points relative to a match
-first_key_points = np.array([np.array([key.pt[0], key.pt[1], 1])
-							 for key in features_1])
-second_key_points = np.array([np.array([key.pt[0], key.pt[1], 1])
-							  for key in features_2])
+first_key_points = np.array(
+	[np.array([key.pt[0], key.pt[1], 1]) for key in features_1]
+)
+second_key_points = np.array(
+	[np.array([key.pt[0], key.pt[1], 1]) for key in features_2]
+)
 
 # PHASE 3: PATCH EXTRACTION
 # Description: Patches are extracted from the matches computed from features.
@@ -72,40 +77,16 @@ first_depth = np.asarray(first_rgbd.depth)
 second_rgbd = action.second.get_rgbd_image()
 second_color = np.asarray(second_rgbd.color)
 second_depth = np.asarray(second_rgbd.depth)
-w = first_color.shape[1]
-h = first_color.shape[0]
-
-def get_patch(patch_key_point,
-			  color_img,
-			  depth_img) -> np.ndarray:
-	patch = np.zeros((4, 1 + 2 * PATCH_SIDE, 1 + 2 * PATCH_SIDE))
-	xc = patch_key_point[0]
-	yc = patch_key_point[1]
-	
-	# Iterate taking care of border cases
-	for x_off in range(2 * PATCH_SIDE + 1):
-		for y_off in range(2 * PATCH_SIDE + 1):
-			xo = int(max(0, min(xc - PATCH_SIDE,
-								w - 1 - 2 * PATCH_SIDE)) + x_off)
-			yo = int(max(0, min(yc - PATCH_SIDE,
-								h - 1 - 2 * PATCH_SIDE)) + y_off)
-			
-			patch[0, y_off, x_off] = color_img[yo, xo, 0]
-			patch[1, y_off, x_off] = color_img[yo, xo, 1]
-			patch[2, y_off, x_off] = color_img[yo, xo, 2]
-			patch[3, y_off, x_off] = depth_img[yo, xo]
-			
-	return patch
 
 for key_point in first_key_points:
-	first_patches.append(get_patch(key_point,
-								   first_color,
-								   first_depth))
-
+	first_patches.append(
+		SemanticSampling.get_patch(key_point, first_color, first_depth)
+	)
 for key_point in second_key_points:
-	second_patches.append(get_patch(key_point,
-									second_color,
-									second_depth))
+	second_patches.append(
+		SemanticSampling.get_patch(key_point, second_color, second_depth)
+	)
+
 first_patches = np.array(first_patches)
 second_patches = np.array(second_patches)
 
@@ -117,24 +98,22 @@ file_path = "neuralnetwork/model/rgbd_triplet_patch_encoder_model_no_code.pt"
 model: RGBD_TripletNetwork = torch.load(file_path)
 model.eval()
 
-patches_input = Variable(Tensor([first_patches]).squeeze(0).float())
-predictions = model(patches_input)
-predictions = predictions.detach().numpy()
-first_latent_vectors = predictions
+patches_input = Variable(Tensor(first_patches).float())
+first_latent_vectors = model(patches_input).detach().numpy()
 
-patches_input = Variable(Tensor([second_patches]).squeeze(0).float())
-predictions = model(patches_input)
-predictions = predictions.detach().numpy()
-second_latent_vectors = predictions
+patches_input = Variable(Tensor(second_patches).float())
+second_latent_vectors = model(patches_input).detach().numpy()
 
 # PHASE 5: SEMANTIC SCORE
-# Description: A semantic score is computed between each latent vector to resemble
-# a similarity function.
+# Description: A semantic score is computed between each latent vector to
+# resemble a similarity function.
 print("# Phase 5: computing semantic score of matches")
+
+
 class LatentMatchScore(object):
 	"""Class used to enclose matches score between latent vectors.
 	"""
-	SCORING_METHODS = ["euclidean"]
+	SCORING_METHODS = ["euclidean", "cosine"]
 	
 	def __init__(self, first_latents: np.ndarray,
 				 second_latents: np.ndarray,
@@ -186,34 +165,48 @@ class LatentMatchScore(object):
 			self.score = np.linalg.norm(vector_2 - vector_1)
 			if self.score == 0:
 				self.score = self.eps
+		elif method == "cosine":
+			vector_1 = self.__first_latents[self.first_idx]
+			vector_2 = self.__second_latents[self.second_idx]
+			self.score = torch.cosine_similarity(vector_1, vector_2)
+			if self.score == 0:
+				self.score = self.eps
+
 
 # Even though a different structure is used, element at index i of action.links
 # is the same match represented at index i of matches_semantic_scores
-matches_semantic_scores = []
+semantic_scores = []
 for idx in range(len(first_latent_vectors)):
-	match_score = LatentMatchScore(first_latent_vectors,
-								   second_latent_vectors,
-								   idx,
-								   idx)
-	match_score.compute_score()
-	matches_semantic_scores.append(match_score)
+	match_score = LatentMatchScore(
+		first_latent_vectors,
+		second_latent_vectors,
+		idx,
+		idx
+	)
+	match_score.compute_score(method="euclidean")
+	semantic_scores.append(match_score.score)
 
 # PHASE 6: SOFTMAX
 # Description: Softmax is applied over all semantic scores to be able to extract
 # a probability distribution over which weighted RANSAC will be executed.
 print("# Phase 6: computing probabilities of being chosen")
-semantic_scores = [latent_match.score
-				   for latent_match in matches_semantic_scores]
-probabilities = scipy.special.softmax(semantic_scores)
-
+semantic_scores = np.array(semantic_scores)
+semantic_scores = np.ones(len(semantic_scores)) - (semantic_scores - min(semantic_scores)) / (max(semantic_scores) - min(semantic_scores))
+semantic_scores = torch.from_numpy(semantic_scores).float()
+semantic_probs = torch.nn.Softmax()(semantic_scores)
+probs = semantic_probs.tolist()
+probs = np.asarray(probs)
+probs /= np.sum(probs)
 # PHASE 7: WEIGHTED RANSAC
 # Description: RANSAC over the patches with weights to represent the probability
 # of being chosen.
 print("# Phase 7: executing weighted ransac")
 semantic_ransac = SemanticSampling()
-best_f, best_mask = semantic_ransac.ransac_fundamental_matrix(action,
-															  iterations=1000,
-															  semantic=probabilities)
+best_f, best_mask = semantic_ransac.ransac_fundamental_matrix(
+	action,
+	iterations=1000,
+	semantic=probs
+)
 
 # PHASE 8: LOCALIZATION
 # Description: Given the results of RANSAC, we perform localization.
@@ -229,11 +222,11 @@ print("Q = %s" % action.from_rot_to_quat(normalize_em=False))
 # PHASE 9: VISUALIZATION
 # Description: Given the results of the pipeline, point clouds are visualized.
 print("# Phase 9: printing visualization")
-action.compute_inliers()
+action.set_inliers(best_mask)
 inliers_image = merger.merge_inliers(action)
 
-visualizer = Visualizer(action=action)
-visualizer.plot_action_point_cloud(registration_method="standard")
+#visualizer = Visualizer(action=action)
+#visualizer.plot_action_point_cloud(registration_method="standard")
 
 cv2.imshow("Inliers", inliers_image)
-cv2.waitKey()
+cv2.waitKey(0)
