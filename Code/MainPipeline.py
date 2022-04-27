@@ -16,7 +16,7 @@ from utils.utils import *
 
 DETECTION_METHOD = "ORB"
 first = 10
-second = 70
+second = 50
 
 # PIPELINE TO PERFORM SEMANTIC SAMPLING USING DEEP NEURAL NETWORKS
 # PHASE 1: DETECTION
@@ -205,19 +205,23 @@ probs /= np.sum(probs)
 # of being chosen.
 print("# Phase 7: executing weighted ransac")
 semantic_ransac = SemanticSampling()
-best_f, best_mask = semantic_ransac.ransac_fundamental_matrix(
+dnn_best_f, dnn_best_mask = semantic_ransac.ransac_fundamental_matrix(
 	action,
 	iterations=10,
 	semantic=probs
+)
+cv_best_f, cv_best_mask = semantic_ransac.ransac_fundamental_matrix(
+	action,
+	iterations=10
 )
 
 # PHASE 8: LOCALIZATION
 # Description: Given the results of RANSAC, we perform localization.
 print("# Phase 8: doing localization")
-action.set_fundamental_matrix(best_f, best_mask)
+action.set_fundamental_matrix(dnn_best_f, dnn_best_mask)
 action.compute_essential_matrix()
 action.roto_translation()
-print("F = %s" % best_f)
+print("F = %s" % dnn_best_f)
 print("E = %s" % action.e_matrix)
 print("R, t = %s, %s" % (action.R, action.t))
 print("Q = %s" % action.from_rot_to_quat(normalize_em=False))
@@ -225,11 +229,27 @@ print("Q = %s" % action.from_rot_to_quat(normalize_em=False))
 # PHASE 9: VISUALIZATION
 # Description: Given the results of the pipeline, point clouds are visualized.
 print("# Phase 9: printing visualization")
-action.set_inliers(best_mask)
-inliers_image = merger.merge_inliers(action)
+action.set_inliers(dnn_best_mask)
+dnn_inliers_image = merger.merge_inliers(action)
 
 #visualizer = Visualizer(action=action)
 #visualizer.plot_action_point_cloud(registration_method="standard")
 
-cv2.imshow("Inliers", inliers_image)
+cv2.imshow("DNN-RANSAC Inliers", dnn_inliers_image)
+
+action.set_fundamental_matrix(cv_best_f, cv_best_mask)
+action.compute_essential_matrix()
+action.roto_translation()
+print("F = %s" % cv_best_f)
+print("E = %s" % action.e_matrix)
+print("R, t = %s, %s" % (action.R, action.t))
+print("Q = %s" % action.from_rot_to_quat(normalize_em=False))
+
+action.set_inliers(cv_best_mask)
+cv_inliers_image = merger.merge_inliers(action)
+
+#visualizer = Visualizer(action=action)
+#visualizer.plot_action_point_cloud(registration_method="standard")
+
+cv2.imshow("RANSAC Inliers", cv_inliers_image)
 cv2.waitKey(0)

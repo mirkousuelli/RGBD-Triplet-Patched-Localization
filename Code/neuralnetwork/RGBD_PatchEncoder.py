@@ -36,8 +36,7 @@ class RGBD_PatchEncoder(nn.Module):
 			nn.ReLU(True),
 
 			# 1 x 1 @ 64  (output shape)
-			nn.Conv2d(32, 64, 3, stride=2, padding=1)#,
-			#nn.BatchNorm2d(64),
+			nn.Conv2d(32, 64, 3, stride=2, padding=1)
 		)
 
 		# latent layer vector

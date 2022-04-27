@@ -14,7 +14,7 @@ from cv2 import KeyPoint
 from open3d.cpu.pybind.camera import PinholeCameraIntrinsic, PrimeSenseDefault
 from open3d.cpu.pybind.geometry import PointCloud
 
-from Code.ProjectObject import ProjectObject
+from ProjectObject import ProjectObject
 
 
 class Frame(ProjectObject):

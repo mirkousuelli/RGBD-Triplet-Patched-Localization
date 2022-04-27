@@ -3,11 +3,11 @@ import torch.utils.data
 from torch.optim import lr_scheduler
 import numpy as np
 
-from Code.neuralnetwork.RGBD_PatchEncoder import *
-from Code.neuralnetwork.RGBD_TripletLoss import *
-from Code.neuralnetwork.RGBD_TripletNetwork import *
-from Code.neuralnetwork.RGBD_TripletTrainer import *
-from Code.neuralnetwork.RGBD_TripletLocalizationDataset import *
+from neuralnetwork.RGBD_PatchEncoder import *
+from neuralnetwork.RGBD_TripletLoss import *
+from neuralnetwork.RGBD_TripletNetwork import *
+from neuralnetwork.RGBD_TripletTrainer import *
+from neuralnetwork.RGBD_TripletLocalizationDataset import *
 
 np.seterr(divide='ignore', invalid='ignore')
 cuda = torch.cuda.is_available()

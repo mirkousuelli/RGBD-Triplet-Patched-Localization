@@ -4,10 +4,10 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from Code.camera.Frame import Frame
-from Code.camera.Action import Action
-from Code.tools.Detector import Detector
-from Code.utils.utils import *
+from camera.Frame import Frame
+from camera.Action import Action
+from tools.Detector import Detector
+from utils.utils import *
 
 
 class RGBD_TripletLocalizationDataset(Dataset):

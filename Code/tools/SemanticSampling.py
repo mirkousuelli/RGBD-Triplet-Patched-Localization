@@ -11,9 +11,10 @@ University : Politecnico di Milano - A.Y. 2021/2022
 import numpy as np
 import scipy
 
-from Code.camera.Action import Action
+from camera.Action import Action
 
 PATCH_SIDE = 8
+
 
 class SemanticSampling:
 	"""
@@ -130,12 +131,13 @@ class SemanticSampling:
 		return np.linalg.norm(err)
 
 	def ransac_fundamental_matrix(
-			self,
-			action: Action,
-			error=0.7,  # TODO: to be tuned!
-			sampling_rate=0.3,
-			iterations=1000,
-			semantic=None
+		self,
+		action: Action,
+		error=0.7,  # TODO: to be tuned!
+		sampling_rate=0.4,
+		iterations=1000,
+		semantic=None,
+		seed=42
 	):
 		"""
 		Custom version of RANSAC able to work with a pseudo-random function
@@ -175,6 +177,9 @@ class SemanticSampling:
 
 		# counters
 		best_consensus, consensus = 0, 0
+
+		# let's fix the seed!
+		np.random.seed(seed)
 
 		# ransac iterations
 		for _ in range(iterations):
