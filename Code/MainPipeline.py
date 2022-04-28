@@ -14,9 +14,10 @@ from tools.SemanticSampling import SemanticSampling
 from tools.Visualizer import Visualizer
 from utils.utils import *
 
+ITERATIONS = 100
 DETECTION_METHOD = "ORB"
-first = 10
-second = 50
+first = 0
+second = 100
 
 # PIPELINE TO PERFORM SEMANTIC SAMPLING USING DEEP NEURAL NETWORKS
 # PHASE 1: DETECTION
@@ -43,7 +44,7 @@ action = Action(frame1, frame2)
 # between points in images.
 print("# Phase 2: performing matching")
 merger = Merger(
-	num_features=5000,
+	num_features=100000,
 	detector_method=DETECTION_METHOD,
 	matcher_method="FLANN"
 )
@@ -192,13 +193,16 @@ for idx in range(len(first_latent_vectors)):
 # a probability distribution over which weighted RANSAC will be executed.
 print("# Phase 6: computing probabilities of being chosen")
 semantic_scores = np.array(semantic_scores)
-semantic_scores = np.ones(len(semantic_scores)) - \
-                  (semantic_scores - min(semantic_scores)) / \
-                  (max(semantic_scores) - min(semantic_scores))
+semantic_scores -= semantic_scores.mean()
+semantic_scores /= semantic_scores.std()
 semantic_scores = torch.from_numpy(semantic_scores).float()
 semantic_probs = torch.nn.Softmax(dim=0)(semantic_scores)
+ones_probs = torch.ones(semantic_probs.size(dim=0))
+semantic_probs = torch.sub(ones_probs, semantic_probs)
+semantic_probs = torch.nn.Softmax(dim=0)(semantic_probs)
 probs = semantic_probs.tolist()
 probs = np.asarray(probs)
+probs[probs < np.percentile(probs, 60)] = 0
 probs /= np.sum(probs)
 # PHASE 7: WEIGHTED RANSAC
 # Description: RANSAC over the patches with weights to represent the probability
@@ -207,12 +211,12 @@ print("# Phase 7: executing weighted ransac")
 semantic_ransac = SemanticSampling()
 dnn_best_f, dnn_best_mask = semantic_ransac.ransac_fundamental_matrix(
 	action,
-	iterations=10,
+	iterations=ITERATIONS,
 	semantic=probs
 )
 cv_best_f, cv_best_mask = semantic_ransac.ransac_fundamental_matrix(
 	action,
-	iterations=10
+	iterations=ITERATIONS
 )
 
 # PHASE 8: LOCALIZATION

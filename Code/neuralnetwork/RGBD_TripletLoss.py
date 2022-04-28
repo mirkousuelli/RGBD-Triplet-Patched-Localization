@@ -46,8 +46,10 @@ class RGBD_TripletLoss(nn.Module):
             Triplet loss result
         """
 
-        dist_pos = torch.cosine_similarity(latent_anchor, latent_pos)
-        dist_neg = torch.cosine_similarity(latent_anchor, latent_neg)
+        #dist_pos = torch.cosine_similarity(latent_anchor, latent_pos)
+        #dist_neg = torch.cosine_similarity(latent_anchor, latent_neg)
+        dist_pos = (latent_anchor - latent_pos).pow(2).sum(1)
+        dist_neg = (latent_anchor - latent_neg).pow(2).sum(1)
         losses = func.relu(dist_pos - dist_neg + self.alpha)
 
         return losses.mean()

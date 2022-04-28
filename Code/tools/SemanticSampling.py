@@ -133,6 +133,7 @@ class SemanticSampling:
 	def ransac_fundamental_matrix(
 		self,
 		action: Action,
+		num_sample=8,
 		error=0.7,  # TODO: to be tuned!
 		sampling_rate=0.4,
 		iterations=1000,
@@ -185,7 +186,9 @@ class SemanticSampling:
 		for _ in range(iterations):
 			# find 8 random points through a pseudo random set
 			# starting from indexes
-			rand_idx = np.random.choice(range(len(action.links)), 8, p=semantic)
+			rand_idx = np.random.choice(
+				range(len(action.links)), num_sample, p=semantic
+			)
 
 			# taking the proper links through the computed indexes above
 			rand_samples = [action.links[i] for i in rand_idx]
