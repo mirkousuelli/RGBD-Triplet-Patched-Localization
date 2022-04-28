@@ -30,37 +30,50 @@ pcd_1 = o3d.geometry.PointCloud.create_from_rgbd_image(
         o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault
     )
 )
+color_raw_2 = o3d.io.read_image('../../Dataset/Testing/2/Colors/00060-color.png')
+depth_raw_2 = o3d.io.read_image('../../Dataset/Testing/2/Depths/00060-depth.png')
+rgbd_image_2 = o3d.geometry.RGBDImage.create_from_tum_format(color_raw_2, depth_raw_2)
+dopo = o3d.geometry.RGBDImage.create_from_color_and_depth(color_raw_2, depth_raw_2, convert_rgb_to_intensity=False)
+rgbd_image_2.color = dopo.color
+pcd_2 = o3d.geometry.PointCloud.create_from_rgbd_image(
+    rgbd_image_2,
+    o3d.camera.PinholeCameraIntrinsic(
+        o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault
+    )
+)
 
-pcd_1.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-
+pcd_1.transform([[1, 0, 0, 0],
+                 [0, -1, 0, 0],
+                 [0, 0, -1, 0],
+                 [0, 0, 0, 1]])
+R = o3d.geometry.PointCloud.get_rotation_matrix_from_xyz((-0.35, 0, 0))
+pcd_1.rotate(R, center=pcd_1.get_center())
+pcd_2.transform([[1, 0, 0, 0],
+                 [0, -1, 0, 0],
+                 [0, 0, -1, 0],
+                 [0, 0, 0, 1]])
+R = o3d.geometry.PointCloud.get_rotation_matrix_from_xyz((-0.35, 0, 0))
+pcd_2.rotate(R, center=pcd_2.get_center())
 
 mesh = o3d.geometry.TriangleMesh.create_coordinate_frame()
 mesh_t1 = copy.deepcopy(mesh).translate(
 	(frame1.t[0], frame1.t[1], frame1.t[2])
 )
-R1 = mesh.get_rotation_matrix_from_quaternion(
-	(frame1.pose[0], frame1.pose[1], frame1.pose[2], frame1.pose[3])
-)
-mesh_t1.rotate(R1, center=mesh_t1.get_center())
 mesh_t2 = copy.deepcopy(mesh).translate(
 	(frame2.t[0], frame2.t[1], frame2.t[2])
 )
-R2 = mesh.get_rotation_matrix_from_quaternion(
-	(frame2.pose[0], frame2.pose[1], frame2.pose[2], frame2.pose[3])
-)
-mesh_t2.rotate(R2, center=mesh_t2.get_center())
 
 pcd_1.translate(mesh_t1.get_center() - pcd_1.get_center())
+pcd_2.translate(mesh_t2.get_center() - pcd_2.get_center())
 
-print()
+R = o3d.geometry.PointCloud.get_rotation_matrix_from_quaternion(
+	(frame2.pose[0], frame2.pose[1], frame2.pose[2], frame2.pose[3])
+)
+pcd_2.rotate(R, center=pcd_2.get_center())
+mesh_t2.rotate(R, center=mesh_t2.get_center())
+
 print(f'Center of mesh: {mesh.get_center()}')
-print()
 print(f'Center of mesh t1: {mesh_t1.get_center()}')
-print(f'Rotation mesh t1: {mesh_t1.get_rotation_matrix_from_xyz(mesh_t1.get_center())}')
-print()
 print(f'Center of mesh t2: {mesh_t2.get_center()}')
-print(f'Rotation mesh t2: {mesh_t2.get_rotation_matrix_from_xyz(mesh_t2.get_center())}')
-print()
 print(f'Image 1: {pcd_1.get_center()}')
-print(f'Rotation mesh t1: {mesh_t1.get_rotation_matrix_from_xyz(mesh_t1.get_center())}')
-o3d.visualization.draw_geometries([mesh_t1, pcd_1])
+o3d.visualization.draw_geometries([mesh, mesh_t1, mesh_t2, pcd_1, pcd_2])
