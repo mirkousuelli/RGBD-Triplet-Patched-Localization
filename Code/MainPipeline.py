@@ -14,10 +14,10 @@ from tools.SemanticSampling import SemanticSampling
 from tools.Visualizer import Visualizer
 from utils.utils import *
 
-ITERATIONS = 100
+ITERATIONS = 5000
 DETECTION_METHOD = "ORB"
-first = 0
-second = 100
+first = 300
+second = 380
 
 # PIPELINE TO PERFORM SEMANTIC SAMPLING USING DEEP NEURAL NETWORKS
 # PHASE 1: DETECTION
@@ -44,7 +44,7 @@ action = Action(frame1, frame2)
 # between points in images.
 print("# Phase 2: performing matching")
 merger = Merger(
-	num_features=100000,
+	num_features=5000,
 	detector_method=DETECTION_METHOD,
 	matcher_method="FLANN"
 )
@@ -96,7 +96,7 @@ second_patches = np.array(second_patches)
 # Description: We use the extracted patches to extract latent vectors using the
 # DNN (Deep Neural Network).
 print("# Phase 4: computing latent vectors")
-file_path = "neuralnetwork/model/rgbd_triplet_patch_encoder_model_no_code.pt"
+file_path = "neuralnetwork/model/rgbd_triplet_patch_encoder_model_euclidean.pt"
 model: RGBD_TripletNetwork = torch.load(file_path)
 model.eval()
 
@@ -185,7 +185,7 @@ for idx in range(len(first_latent_vectors)):
 		idx,
 		idx
 	)
-	match_score.compute_score(method="cosine")
+	match_score.compute_score(method="euclidean")
 	semantic_scores.append(match_score.score)
 
 # PHASE 6: SOFTMAX

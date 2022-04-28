@@ -12,12 +12,14 @@ frame1 = Frame(
 	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
 	first
 )
+frame1.R, frame1.t = frame1.from_pose_to_rototrasl()
 frame2 = Frame(
 	get_rgb_triplet_dataset_path("../../Dataset", "Testing", 2, second),
 	get_depth_triplet_dataset_path("../../Dataset", "Testing", 2, second),
 	get_pose_triplet_dataset_path("../../Dataset", "Testing", 2),
 	second
 )
+frame2.R, frame2.t = frame2.from_pose_to_rototrasl()
 
 color_raw_1 = o3d.io.read_image('../../Dataset/Testing/2/Colors/00000-color.png')
 depth_raw_1 = o3d.io.read_image('../../Dataset/Testing/2/Depths/00000-depth.png')

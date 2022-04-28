@@ -40,8 +40,8 @@ class Frame(ProjectObject):
 		self.key_points_inliers = []
 		self.descriptors_inliers = np.array([], dtype=np.uint8)
 		self.pose = self.extract_pose()
-		self.R, self.t = self.from_pose_to_rototrasl()
 		self.f_matrix = None
+		self.R, self.t = None, None
 
 		# Kinect v1 intrinsic parameters
 		self.fx = 522.259  # 514.120
