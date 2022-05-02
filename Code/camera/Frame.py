@@ -60,7 +60,7 @@ class Frame(ProjectObject):
 		camera_dir = os.path.dirname(__file__)
 
 		file_path = os.path.join(camera_dir, self.pose_path)
-		self.pose = linecache.getline(file_path, self.index + 1)
+		self.pose = linecache.getline(self.pose_path, self.index + 1)
 		self.pose = self.pose.split(" ")[:-1]
 		self.pose = np.array(self.pose, dtype=float)
 		return self.pose
