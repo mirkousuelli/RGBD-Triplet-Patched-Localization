@@ -8,6 +8,7 @@ Professor : Vincenzo Caglioti
 Advisors : Giacomo Boracchi, Luca Magri
 University : Politecnico di Milano - A.Y. 2021/2022
 """
+import copy
 from typing import Tuple
 
 import numpy as np
@@ -195,12 +196,27 @@ class Visualizer(ProjectObject):
 									  [R[2,0], R[2,1], R[2, 2], t[2]],
 									  [0, 0, 0, 1]])
 		
+		# create point clouds and coordinate systems
 		frame_1_point_cloud = self.action.first.get_point_cloud()
 		frame_2_point_cloud = self.action.second.get_point_cloud()
-		frame_2_point_cloud.transform(t_from_2_to_1)
+		mesh1 = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=frame_1_point_cloud.get_center())
+		mesh2 = o3d.geometry.TriangleMesh.create_coordinate_frame(origin=frame_2_point_cloud.get_center())
 		
+		# transform point clouds
+		frame_2_point_cloud.transform(t_from_2_to_1)
 		if registration_method == "pose":
 			frame_1_point_cloud.transform(t_from_1_to_0)
+			
+		# transform the coordinate systems
+		mesh_frame_1 = copy.deepcopy(mesh1).translate(np.array([0, 0, 0]))
+		mesh_frame_2 = copy.deepcopy(mesh2).translate(np.array([0, 0, 0]))
+		mesh_frame_2.transform(t_from_2_to_1)
+		if registration_method == "pose":
+			mesh_frame_1.transform(t_from_1_to_0)
+			
+		#t_2_to_1 = mesh_frame_1.get_center() - mesh_frame_2.get_center()
+		#frame_2_point_cloud.translate(t_2_to_1)
+		#mesh_frame_2.translate(t_2_to_1)
 		
 		if not original_color:
 			if color1 is not None:
@@ -210,7 +226,9 @@ class Visualizer(ProjectObject):
 		
 		# View the images
 		o3d.visualization.draw_geometries([frame_1_point_cloud,
-										   frame_2_point_cloud])
+										   frame_2_point_cloud,
+										   mesh_frame_1,
+										   mesh_frame_2])
 	
 	def plot_recording_point_cloud(self, original_color: bool = True,
 								   registration_method: str = "icp") -> None:

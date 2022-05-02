@@ -1,9 +1,9 @@
 import numpy as np
 
-from Code.camera.Action import Action
-from Code.camera.Frame import Frame
-from Code.tools.Merger import Merger
-from Code.utils.utils import *
+from camera.Action import Action
+from camera.Frame import Frame
+from tools.Merger import Merger
+from utils.utils import *
 
 num_samples = 5
 first = 0

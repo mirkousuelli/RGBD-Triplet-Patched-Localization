@@ -337,12 +337,25 @@ class Action(ProjectObject):
 			the second transformation is the transformation of the second point
 			cloud to the reference image.
 		"""
+		pos = 1
+		neg = -1
+		quat_sign = np.array([pos, pos, pos, pos])
+		pos_sign = np.array([pos, pos, pos])
+		
 		pose_2 = self.second.extract_pose()
-		quat_2 = pose_2[0:4]
-		pos_2 = pose_2[4:7]
+		quat_2 = pose_2[0:4] * quat_sign
+		pos_2 = pose_2[4:7] * pos_sign
+		y = pos_2[1]
+		z = pos_2[2]
+		pos_2[1] = z
+		pos_2[2] = y
 		pose_1 = self.first.extract_pose()
-		quat_1 = pose_1[0:4]
-		pos_1 = pose_1[4:7]
+		quat_1 = pose_1[0:4] * quat_sign
+		pos_1 = pose_1[4:7] * pos_sign
+		y = pos_1[1]
+		z = pos_1[2]
+		pos_1[1] = z
+		pos_1[2] = y
 		
 		translation_1 = get_4x4_transform_from_translation(pos_1)
 		rotation_1 = get_4x4_transform_from_quaternion(quat_1)
