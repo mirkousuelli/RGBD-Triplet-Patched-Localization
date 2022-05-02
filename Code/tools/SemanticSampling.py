@@ -13,40 +13,11 @@ import scipy
 
 from camera.Action import Action
 
-PATCH_SIDE = 8
-
 
 class SemanticSampling:
 	"""
 	Semantic Sampling procedures for localization.
 	"""
-
-	@staticmethod
-	def get_patch(
-			patch_key_point,
-			color_img,
-			depth_img
-	) -> np.ndarray:
-		w = color_img.shape[1]
-		h = color_img.shape[0]
-		patch = np.zeros((4, 1 + 2 * PATCH_SIDE, 1 + 2 * PATCH_SIDE))
-		xc = patch_key_point[0]
-		yc = patch_key_point[1]
-
-		# Iterate taking care of border cases
-		for x_off in range(2 * PATCH_SIDE + 1):
-			for y_off in range(2 * PATCH_SIDE + 1):
-				xo = int(max(0, min(xc - PATCH_SIDE,
-				                    w - 1 - 2 * PATCH_SIDE)) + x_off)
-				yo = int(max(0, min(yc - PATCH_SIDE,
-				                    h - 1 - 2 * PATCH_SIDE)) + y_off)
-
-				patch[0, y_off, x_off] = color_img[yo, xo, 0]
-				patch[1, y_off, x_off] = color_img[yo, xo, 1]
-				patch[2, y_off, x_off] = color_img[yo, xo, 2]
-				patch[3, y_off, x_off] = depth_img[yo, xo]
-
-		return patch
 
 	@staticmethod
 	def calculate_fundamental_matrix(
