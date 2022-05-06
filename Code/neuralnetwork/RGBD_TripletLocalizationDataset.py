@@ -311,7 +311,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		second_keys = [np.array([pt[0], pt[1], 1])
 		               for pt in second_keys.copy()]
 		second_keys = np.array(second_keys)
-
+		
+		rng = np.random.default_rng(22)
 		# I find all the transformed points using the fundamental matrix
 		triplets = []
 		for key_point in first_keys:
@@ -319,7 +320,20 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			         for key2 in second_keys]
 			x1Fx2 = np.absolute(x1Fx2)
 			pos_idx = np.argmin(x1Fx2)
-			neg_idx = np.argmax(x1Fx2)
+			has_found_good_neg = False
+			
+			while not has_found_good_neg:
+				# Generate random negative
+				neg_idx = rng.integers(low=0, high=x1Fx2.shape[0] - 1)
+				
+				# Compute distance between pos and neg
+				pos_point = np.asarray(second_keys[pos_idx])
+				neg_point = np.asarray(second_keys[neg_idx])
+				dist = np.linalg.norm(pos_point - neg_point)
+				
+				# Check that neg is not in the circle of pos descriptor
+				if dist > action.second.key_points[pos_idx].size / 2:
+					has_found_good_neg = True
 
 			# I add the triplet anchor-positive-negative to the triplets list
 			triplets.append(
