@@ -85,7 +85,7 @@ semantic_scores = get_semantic_scores(first_latent_vectors, second_latent_vector
 # Description: Softmax is applied over all semantic scores to be able to extract
 # a probability distribution over which weighted RANSAC will be executed.
 print("# Phase 6: computing probabilities of being chosen")
-probs = compute_probabilities(semantic_scores)
+probs = compute_probabilities(semantic_scores, method="sum")
 
 # PHASE 7: WEIGHTED RANSAC
 # Description: RANSAC over the patches with weights to represent the probability

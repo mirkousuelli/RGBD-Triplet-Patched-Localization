@@ -250,27 +250,40 @@ def get_semantic_scores(first_latent_vectors: np.ndarray,
 		semantic_scores.append(match_score.score)
 	return semantic_scores
 
-def compute_probabilities(semantic_scores: list) -> np.ndarray:
+def compute_probabilities(semantic_scores: list,
+						  method: str = "softmax") -> np.ndarray:
 	"""Compute the probability of a given match.
 	
 	:param semantic_scores:
 		The semantic scores of the matches.
+		
+	:param method:
+		The method to use to compute the probabilities.
 	
 	:return:
 		The probabilities of the matches.
 	"""
-	semantic_scores = np.array(semantic_scores)
-	semantic_scores -= semantic_scores.mean()
-	semantic_scores /= semantic_scores.std()
-	semantic_scores = torch.from_numpy(semantic_scores).float()
-	semantic_probs = torch.nn.Softmax(dim=0)(semantic_scores)
-	ones_probs = torch.ones(semantic_probs.size(dim=0))
-	semantic_probs = torch.sub(ones_probs, semantic_probs)
-	semantic_probs = torch.nn.Softmax(dim=0)(semantic_probs)
-	probs = semantic_probs.tolist()
-	probs = np.asarray(probs)
-	probs[probs < np.percentile(probs, 60)] = 0
-	probs /= np.sum(probs)
+	if method not in ["sum", "softmax"]:
+		raise ValueError("Choose a feasible method")
+	
+	if method == "softmax":
+		semantic_scores = np.array(semantic_scores)
+		semantic_scores -= semantic_scores.mean()
+		semantic_scores /= semantic_scores.std()
+		semantic_scores = torch.from_numpy(semantic_scores).float()
+		semantic_probs = torch.nn.Softmax(dim=0)(semantic_scores)
+		ones_probs = torch.ones(semantic_probs.size(dim=0))
+		semantic_probs = torch.sub(ones_probs, semantic_probs)
+		semantic_probs = torch.nn.Softmax(dim=0)(semantic_probs)
+		probs = semantic_probs.tolist()
+		probs = np.asarray(probs)
+		probs[probs < np.percentile(probs, 60)] = 0
+		probs /= np.sum(probs)
+	else:
+		semantic_scores = np.array(semantic_scores)
+		sum_ = np.sum(semantic_scores)
+		probs = semantic_scores / sum_
+	
 	return probs
 
 def get_match_probabilities(action: Action,
