@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-05-07T08:56:20.016Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15" etag="iXjaifXX6Mla82EjEDh5" version="18.0.1" type="github" pages="4">
+<mxfile host="app.diagrams.net" modified="2022-05-07T08:56:47.524Z" agent="5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15" etag="BoanLFc6WF0zzUJ1KRMY" version="18.0.1" type="github" pages="4">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Components">
     <mxGraphModel dx="946" dy="542" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -687,7 +687,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="t5Wde6OU6j4x6PrBEpFK-21" value="&lt;b&gt;RANSAC&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b1ddf0;strokeColor=#10739e;" vertex="1" parent="1">
-          <mxGeometry x="530" y="33" width="80" height="70" as="geometry" />
+          <mxGeometry x="481" y="33" width="80" height="70" as="geometry" />
         </mxCell>
         <mxCell id="t5Wde6OU6j4x6PrBEpFK-22" value="LOCALIZATION" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="701" y="33" width="100" height="70" as="geometry" />
@@ -719,7 +719,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="K0zNCv2ROFGdCsGtAYMN-1" value="&lt;font color=&quot;#7093c7&quot;&gt;Computer Vision&amp;nbsp;pipeline&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
-          <mxGeometry x="314" y="40" width="166" height="30" as="geometry" />
+          <mxGeometry x="308" y="40" width="166" height="30" as="geometry" />
         </mxCell>
         <mxCell id="K0zNCv2ROFGdCsGtAYMN-5" value="&lt;span style=&quot;caret-color: rgb(102, 178, 255);&quot;&gt;&lt;font color=&quot;#c75050&quot;&gt;Deep Learning pipeline&lt;/font&gt;&lt;/span&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
           <mxGeometry x="85" y="120" width="156" height="30" as="geometry" />
