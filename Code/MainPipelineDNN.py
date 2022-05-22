@@ -64,7 +64,8 @@ print("# Phase 3: performing patch extraction")
 first_patches, second_patches = get_semantic_patches(action,
 													 first_key_points,
 													 second_key_points,
-													 PATCH_SIDE)
+													 PATCH_SIDE,
+													 method="rgbd")
 
 # PHASE 4: LATENT VECTOR
 # Description: We use the extracted patches to extract latent vectors using the

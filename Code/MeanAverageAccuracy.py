@@ -1,8 +1,11 @@
 import json
+import linecache
+import os
 from os.path import exists
 from typing import Tuple, Union
 
 import numpy as np
+from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from camera.Action import Action
@@ -26,7 +29,9 @@ class MeanAverageAccuracy(object):
 				 match_method: str,
 				 network_path: str,
 				 ransac_iterations: int,
-				 patch_side: int):
+				 patch_side: int,
+				 dataset: str = "washington",
+				 method: str = "rgbd"):
 		"""Initializes the MeanAverageAccuracy object.
 		
 		:param threshold:
@@ -57,6 +62,13 @@ class MeanAverageAccuracy(object):
 		
 		:param patch_side:
 			The dimension of patch's side.
+			
+		:param dataset:
+			It can be either "washington" or "notre_dame".
+			
+		:param method:
+			States if the network works on rgb or rbgd images. It can be rgb or
+			rgbd.
 		"""
 		super().__init__()
 		
@@ -69,6 +81,8 @@ class MeanAverageAccuracy(object):
 		self.network_path = network_path
 		self.ransac_iterations = ransac_iterations
 		self.patch_side = patch_side
+		self.dataset = dataset
+		self.method = method
 		
 	def compute_metric(self, verbose: bool = True) -> Tuple[float, float]:
 		"""Computes the mean average accuracy of classical ransac and DNN ransac.
@@ -93,18 +107,7 @@ class MeanAverageAccuracy(object):
 			if verbose:
 				print("Analysing images %s and %s" % (img1, img2))
 			
-			frame1 = Frame(
-				get_rgb_triplet_dataset_path("../Dataset", "Testing", 2, img1),
-				get_depth_triplet_dataset_path("../Dataset", "Testing", 2, img1),
-				get_pose_triplet_dataset_path("../Dataset", "Testing", 2),
-				img1
-			)
-			frame2 = Frame(
-				get_rgb_triplet_dataset_path("../Dataset", "Testing", 2, img2),
-				get_depth_triplet_dataset_path("../Dataset", "Testing", 2, img2),
-				get_pose_triplet_dataset_path("../Dataset", "Testing", 2),
-				img2
-			)
+			frame1, frame2 = self._get_frames(img1, img2)
 			action = Action(frame1, frame2)
 			dnn_f, dnn_mask, cv_f, cv_mask = self.__get_dnn_cv_matrices(action)
 			
@@ -121,10 +124,7 @@ class MeanAverageAccuracy(object):
 			cv_R, cv_t = action.R, action.t
 			
 			# Compute ground truth roto-translation
-			t_from_2_to_0, t_from_1_to_0 = action.roto_translation_pose()
-			roto_translation = t_from_2_to_0 @ np.linalg.inv(t_from_1_to_0)
-			truth_R = roto_translation[0:3, 0:3]
-			truth_t = roto_translation[0:3, 3]
+			truth_R, truth_t = self._get_ground_truth(action)
 			
 			# Compute angle between estimations and ground truth
 			dnn_unit_t = dnn_t / np.linalg.norm(dnn_t)
@@ -155,6 +155,105 @@ class MeanAverageAccuracy(object):
 				cv_correct += 1
 		
 		return dnn_correct / total, cv_correct / total
+	
+	def _get_frames(self, img1: int,
+					img2: int) -> Tuple[Frame, Frame]:
+		"""Gets the two frame from the dataset.
+		
+		:param img1:
+			The index of the first image to consider.
+		
+		:param img2:
+			The index of the second image to consider.
+		
+		:return:
+			The frames corresponding to the first image (first) and to the
+			second image (second).
+		"""
+		if self.dataset == "washington":
+			frame1 = Frame(get_rgb_triplet_dataset_path("../Dataset", "Testing", 2, img1),
+						   get_depth_triplet_dataset_path("../Dataset", "Testing", 2, img1),
+						   get_pose_triplet_dataset_path("../Dataset", "Testing", 2),
+						   img1)
+			frame2 = Frame(get_rgb_triplet_dataset_path("../Dataset", "Testing", 2, img2),
+						   get_depth_triplet_dataset_path("../Dataset", "Testing", 2,img2),
+						   get_pose_triplet_dataset_path("../Dataset", "Testing", 2),
+						   img2)
+		else:
+			img1_name = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 1)
+			img2_name = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 1)
+			
+			frame1 = Frame("../Dataset/NotreDame/" + img1_name[:-1],
+						   "not_present_in_notre_dame",
+						   "not_present_in_notre_dame",
+						   img1)
+			frame2 = Frame("../Dataset/NotreDame/" + img2_name[:-1],
+						   "not_present_in_notre_dame",
+						   "not_present_in_notre_dame",
+						   img2)
+		
+		return frame1, frame2
+	
+	def _get_ground_truth(self, action: Action):
+		"""Gets the ground truth rotation and translation.
+		
+		:param action:
+			The action representing the couple of images.
+			
+		:return:
+			A tuple composed of rotation (first) and translation (second)
+		"""
+		if self.dataset == "washington":
+			t_from_2_to_0, t_from_1_to_0 = action.roto_translation_pose()
+			roto_translation = np.linalg.inv(t_from_1_to_0) @ t_from_2_to_0
+			truth_R = roto_translation[0:3, 0:3]
+			truth_t = roto_translation[0:3, 3]
+		else:
+			img1 = action.first.index
+			img2 = action.second.index
+			
+			img1_f_k1_k2 = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 3)
+			img1_row1_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 1 + 3)
+			img1_row2_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 2 + 3)
+			img1_row3_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 3 + 3)
+			img1_translation = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 4 + 3)
+			
+			img2_f_k1_k2 = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 3)
+			img2_row1_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 1 + 3)
+			img2_row2_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 2 + 3)
+			img2_row3_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 3 + 3)
+			img2_translation = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 4 + 3)
+			
+			img1_row1_R = img1_row1_R.split(" ")[:-1]
+			img1_row1_R = np.array(img1_row1_R, dtype=float)
+			img1_row2_R = img1_row2_R.split(" ")[:-1]
+			img1_row2_R = np.array(img1_row2_R, dtype=float)
+			img1_row3_R = img1_row3_R.split(" ")[:-1]
+			img1_row3_R = np.array(img1_row3_R, dtype=float)
+			img1_translation = img1_translation.split(" ")[:-1]
+			img1_translation = np.array(img1_translation, dtype=float)
+			
+			img2_row1_R = img2_row1_R.split(" ")[:-1]
+			img2_row1_R = np.array(img2_row1_R, dtype=float)
+			img2_row2_R = img2_row2_R.split(" ")[:-1]
+			img2_row2_R = np.array(img2_row2_R, dtype=float)
+			img2_row3_R = img2_row3_R.split(" ")[:-1]
+			img2_row3_R = np.array(img2_row3_R, dtype=float)
+			img2_translation = img2_translation.split(" ")[:-1]
+			img2_translation = np.array(img2_translation, dtype=float)
+			
+			# here images are from 0 to i
+			img1_R = np.array([[img1_row1_R[0], img1_row1_R[1], img1_row1_R[2]],
+							   [img1_row2_R[0], img1_row2_R[1], img1_row2_R[2]],
+							   [img1_row3_R[0], img1_row3_R[1], img1_row3_R[2]]], dtype=float)
+			img2_R = np.array([[img2_row1_R[0], img2_row1_R[1], img2_row1_R[2]],
+							   [img2_row2_R[0], img2_row2_R[1], img2_row2_R[2]],
+							   [img2_row3_R[0], img2_row3_R[1], img2_row3_R[2]]], dtype=float)
+			
+			truth_R = img1_R @ np.linalg.inv(img2_R)
+			truth_t = img1_translation - img2_translation
+		
+		return truth_R, truth_t
 	
 	def save_to_file(self, file_path: str,
 					 dnn_mAA: float,
@@ -239,8 +338,11 @@ class MeanAverageAccuracy(object):
 			detector_method=self.detect_method,
 			matcher_method=self.match_method
 		)
-		merge_image = merger.merge_action(action)
-		probs = get_match_probabilities(action, self.network_path, self.patch_side)
+		merge_image = merger.merge_action(action, return_draw=False)
+		probs = get_match_probabilities(action,
+										self.network_path,
+										self.patch_side,
+										method=self.method)
 		semantic_ransac = SemanticSampling()
 		dnn_best_f, dnn_best_mask = semantic_ransac.ransac_fundamental_matrix(
 			action,

@@ -91,7 +91,8 @@ class Merger:
 	def merge_action(
 		self,
 		action: Action,
-		limit=-1
+		limit=-1,
+		return_draw: bool = True
 	):
 		"""
 		Merge two images by first detecting their features and then matching
@@ -104,6 +105,10 @@ class Merger:
 		:param limit:
 			Integer number which limits how many matching links to be drawn.
 		:type limit: int
+		
+		:param return_draw:
+			States if things must be drawn or not.
+		:type return_draw: bool
 
 		:return:
 			The two images merged into one image with matching links drawn.
@@ -115,7 +120,11 @@ class Merger:
 			self.detector.detect_and_compute(action.second)
 
 		self.matcher.match_action(action)
-		return self.matcher.draw_action_matches(action, limit=limit)
+		
+		if return_draw:
+			return self.matcher.draw_action_matches(action, limit=limit)
+		else:
+			return None
 
 	def merge_inliers(
 		self,

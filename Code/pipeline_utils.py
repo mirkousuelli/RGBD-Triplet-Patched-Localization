@@ -113,7 +113,8 @@ def get_key_points_from_features(features_1: list,
 def get_semantic_patches(action: Action,
 						 key_points_1: np.ndarray,
 						 key_points_2: np.ndarray,
-						 patch_side: int) -> Tuple[np.ndarray, np.ndarray]:
+						 patch_side: int,
+						 method: str = "rgbd") -> Tuple[np.ndarray, np.ndarray]:
 	"""Get patches from the key points of an image.
 	
 	:param action:
@@ -127,6 +128,9 @@ def get_semantic_patches(action: Action,
 	
 	:param patch_side:
 		The patch side.
+		
+	:param method:
+		States if the network works on rgb or rbgd images.
 	
 	:return:
 		The arrays of the patches relative to the first and the second frame.
@@ -134,29 +138,41 @@ def get_semantic_patches(action: Action,
 	first_patches = []
 	second_patches = []
 	
-	first_rgbd = action.first.get_rgbd_image()
-	first_color = np.asarray(first_rgbd.color)
-	first_depth = np.asarray(first_rgbd.depth)
-	second_rgbd = action.second.get_rgbd_image()
-	second_color = np.asarray(second_rgbd.color)
-	second_depth = np.asarray(second_rgbd.depth)
+	if method == "rgbd":
+		first_rgbd = action.first.get_rgbd_image()
+		first_color = np.asarray(first_rgbd.color)
+		first_depth = np.asarray(first_rgbd.depth)
+		second_rgbd = action.second.get_rgbd_image()
+		second_color = np.asarray(second_rgbd.color)
+		second_depth = np.asarray(second_rgbd.depth)
+	else:
+		first_color = np.asarray(action.first.get_o3d_images(ret="rgb"))
+		first_depth = None
+		second_color = np.asarray(action.second.get_o3d_images(ret="rgb"))
+		second_depth = None
 	
 	for key_point in key_points_1:
 		first_patches.append(__get_patch(key_point,
 										 first_color,
 										 first_depth,
-										 patch_side))
+										 patch_side,
+										 method))
 	for key_point in key_points_2:
 		second_patches.append(__get_patch(key_point,
 										  second_color,
 										  second_depth,
-										  patch_side))
+										  patch_side,
+										  method))
 	
 	first_patches = np.array(first_patches)
 	second_patches = np.array(second_patches)
 	return first_patches, second_patches
 
-def __get_patch(patch_key_point, color_img, depth_img, patch_side):
+def __get_patch(patch_key_point,
+				color_img,
+				depth_img,
+				patch_side,
+				method: str = "rgbd"):
 	"""Extract the patch from the key point and the images.
 	
 	:param patch_key_point:
@@ -170,13 +186,22 @@ def __get_patch(patch_key_point, color_img, depth_img, patch_side):
 	
 	:param patch_side:
 		The side of the patch.
+		
+	:param method:
+		States if the network works on rgb or rbgd images.
 	
 	:return:
 		The extracted patch.
 	"""
 	w = color_img.shape[1]
 	h = color_img.shape[0]
-	patch = np.zeros((4, 1 + 2 * patch_side, 1 + 2 * patch_side))
+	
+	if method == "rgbd":
+		channels = 4
+	else:
+		channels = 3
+	
+	patch = np.zeros((channels, 1 + 2 * patch_side, 1 + 2 * patch_side))
 	xc = patch_key_point[0]
 	yc = patch_key_point[1]
 	
@@ -191,7 +216,9 @@ def __get_patch(patch_key_point, color_img, depth_img, patch_side):
 			patch[0, y_off, x_off] = color_img[yo, xo, 0]
 			patch[1, y_off, x_off] = color_img[yo, xo, 1]
 			patch[2, y_off, x_off] = color_img[yo, xo, 2]
-			patch[3, y_off, x_off] = depth_img[yo, xo]
+			
+			if method == "rgbd":
+				patch[3, y_off, x_off] = depth_img[yo, xo]
 	
 	return patch
 
@@ -288,7 +315,8 @@ def compute_probabilities(semantic_scores: list,
 
 def get_match_probabilities(action: Action,
 							network_path: str,
-							patch_side: int) -> np.ndarray:
+							patch_side: int,
+							method: str = "rgbd") -> np.ndarray:
 	"""From a merged action, it retrieves the probabilities of the matches.
 	
 	:param action:
@@ -300,12 +328,15 @@ def get_match_probabilities(action: Action,
 	:param patch_side:
 		The side of the patch.
 		
+	:param method:
+		States if the network works on rgb or rbgd images.
+		
 	:return:
 		The probabilities of the matches.
 	"""
 	features_1, features_2 = get_features_from_merged(action)
 	first_key_points, second_key_points = get_key_points_from_features(features_1, features_2)
-	first_patches, second_patches = get_semantic_patches(action, first_key_points, second_key_points, patch_side)
+	first_patches, second_patches = get_semantic_patches(action, first_key_points, second_key_points, patch_side, method)
 	first_latent_vectors, second_latent_vectors = get_latent_vectors(network_path, first_patches, second_patches)
 	semantic_scores = get_semantic_scores(first_latent_vectors, second_latent_vectors)
 	probs = compute_probabilities(semantic_scores)
