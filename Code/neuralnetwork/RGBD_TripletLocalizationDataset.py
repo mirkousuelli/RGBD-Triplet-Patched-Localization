@@ -31,7 +31,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			shift=10,
 			random_dist=60,
 			num_features=32,
-			detector_method="ORB"
+			detector_method="ORB",
+			network_type: str = "rgb"
 	):
 		"""
 		RGB-D Triplet Localization Dataset constructor.
@@ -59,6 +60,10 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			set a symmetrical bounds over the current frame which allows to pick
 			a random number around it.
 		:type random_dist: int
+		
+		:param network_type:
+			States if the patches must be only rgb of rgbd.
+		:type network_type: str
 		"""
 		# pre-conditions
 		assert mode in self.MODES, "Error dataset mode! Choose among [%s]" %\
@@ -71,6 +76,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		self.scale = scale
 		self.shift = shift
 		self.random_dist = random_dist
+		self.network_type = network_type
 		self.num_features = num_features
 		self.folder_len = 0
 
@@ -350,8 +356,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 
 		return self.__extract_triplet_patches(action, 8, triplets)
 
-	@staticmethod
 	def __extract_triplet_patches(
+		self,
 		action: Action,
 		patch_side: int,
 		triplets: np.ndarray
@@ -378,39 +384,59 @@ class RGBD_TripletLocalizationDataset(Dataset):
 		# I extract all the patches
 		anchor_patches, positive_patches, negative_patches = [], [], []
 		for triplet in triplets:
-			# Get rgb and depth for both images
-			first_rgbd = action.first.get_rgbd_image()
-			first_color = np.asarray(first_rgbd.color)
-			first_depth = np.asarray(first_rgbd.depth)
-			second_rgbd = action.second.get_rgbd_image()
-			second_color = np.asarray(second_rgbd.color)
-			second_depth = np.asarray(second_rgbd.depth)
-			w = first_color.shape[1]
-			h = first_color.shape[0]
+			if self.network_type == "rgbd":
+				# Get rgb and depth for both images
+				first_rgbd = action.first.get_rgbd_image()
+				first_color = np.asarray(first_rgbd.color)
+				first_depth = np.asarray(first_rgbd.depth)
+				second_rgbd = action.second.get_rgbd_image()
+				second_color = np.asarray(second_rgbd.color)
+				second_depth = np.asarray(second_rgbd.depth)
+			else:
+				first_color = np.asarray(action.first.get_o3d_images(ret="rgb"))
+				first_depth = None
+				second_color = np.asarray(action.second.get_o3d_images(ret="rgb"))
+				second_depth = None
+			
+			w1 = first_color.shape[1]
+			h1 = first_color.shape[0]
+			w2 = second_color.shape[1]
+			h2 = second_color.shape[0]
 
 			for idx, coord in enumerate(triplet):
-				patch = np.zeros((4, 1 + 2 * patch_side, 1 + 2 * patch_side))
+				if self.network_type == "rgbd":
+					patch = np.zeros((4, 1 + 2 * patch_side, 1 + 2 * patch_side))
+				else:
+					patch = np.zeros((3, 1 + 2 * patch_side, 1 + 2 * patch_side))
+				
 				xc = coord[0]
 				yc = coord[1]
 
 				# Iterate taking care of border cases
 				for x_off in range(2 * patch_side + 1):
 					for y_off in range(2 * patch_side + 1):
+						if idx == 0:
+							color_img = first_color
+							depth_img = first_depth
+							w = w1
+							h = h1
+						else:
+							color_img = second_color
+							depth_img = second_depth
+							w = w2
+							h = h2
+						
 						xo = int(max(0, min(xc - patch_side,
 						                    w - 1 - 2 * patch_side)) + x_off)
 						yo = int(max(0, min(yc - patch_side,
 						                    h - 1 - 2 * patch_side)) + y_off)
-						if idx == 0:
-							color_img = first_color
-							depth_img = first_depth
-						else:
-							color_img = second_color
-							depth_img = second_depth
 
 						patch[0, y_off, x_off] = color_img[yo, xo, 0]
 						patch[1, y_off, x_off] = color_img[yo, xo, 1]
 						patch[2, y_off, x_off] = color_img[yo, xo, 2]
-						patch[3, y_off, x_off] = depth_img[yo, xo]
+						
+						if self.network_type == "rgbd":
+							patch[3, y_off, x_off] = depth_img[yo, xo]
 
 				if idx == 0:
 					anchor_patches.append(torch.from_numpy(patch))

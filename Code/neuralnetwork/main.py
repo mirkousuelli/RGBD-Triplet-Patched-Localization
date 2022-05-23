@@ -19,7 +19,8 @@ triplet_train_dataset = RGBD_TripletLocalizationDataset(
 	shift=10,
 	random_dist=50,
 	num_features=16,
-	detector_method="ORB"
+	detector_method="ORB",
+	network_type="rgb"
 )
 triplet_valid_dataset = RGBD_TripletLocalizationDataset(
 	root,
@@ -28,7 +29,8 @@ triplet_valid_dataset = RGBD_TripletLocalizationDataset(
 	shift=10,
 	random_dist=50,
 	num_features=16,
-	detector_method="ORB"
+	detector_method="ORB",
+	network_type="rgb"
 )
 batch_size = 8
 
@@ -60,6 +62,6 @@ fit(
 )
 
 directory = os.path.dirname(__file__)
-file_path = os.path.join(directory, "model/rgbd_triplet_patch_encoder_model_euclidean.pt")
+file_path = os.path.join(directory, "model/rgb_triplet_patch_encoder_model_euclidean_2.pt")
 torch.save(model.encoder, file_path)
 print("---###@@@$$$!!!! MODEL SAVED !!!$$$$@@@###---")
