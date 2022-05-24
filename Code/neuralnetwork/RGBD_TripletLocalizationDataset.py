@@ -326,7 +326,8 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			         for key2 in second_keys]
 			x1Fx2 = np.absolute(x1Fx2)
 			pos_idx = np.argmin(x1Fx2)
-			has_found_good_neg = False
+			neg_idx = np.argmax(x1Fx2)
+			"""has_found_good_neg = False
 			
 			while not has_found_good_neg:
 				# Generate random negative
@@ -339,7 +340,7 @@ class RGBD_TripletLocalizationDataset(Dataset):
 				
 				# Check that neg is not in the circle of pos descriptor
 				if dist > action.second.key_points[pos_idx].size / 2:
-					has_found_good_neg = True
+					has_found_good_neg = True"""
 
 			# I add the triplet anchor-positive-negative to the triplets list
 			triplets.append(

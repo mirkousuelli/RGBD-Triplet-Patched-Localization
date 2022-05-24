@@ -1,6 +1,6 @@
 from MeanAverageAccuracy import MeanAverageAccuracy
 
-ACCURACY_PATH = "accuracy_notre_dame/rgbnet_maa1.json"
+ACCURACY_PATH = "accuracy_washington/rgbnet_maa1.json"
 ALSO_COMPUTE = True
 
 # Create the mAA computation object
@@ -11,7 +11,7 @@ mAA = MeanAverageAccuracy(threshold=10,
 						  merge_features=5000,
 						  detect_method="ORB",
 						  match_method="FLANN",
-						  network_path="neuralnetwork/model/rgb_triplet_patch_encoder_model_euclidean.pt",
+						  network_path="neuralnetwork/model/rgb_triplet_patch_encoder_model_euclidean_2.pt",
 						  ransac_iterations=5000,
 						  patch_side=8,
 						  dataset="washington",

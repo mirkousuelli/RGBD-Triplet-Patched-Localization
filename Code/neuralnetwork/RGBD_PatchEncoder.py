@@ -21,7 +21,7 @@ class RGBD_PatchEncoder(nn.Module):
 		self.encoder_cnn = nn.Sequential(
 
 			# 8 x 8 @ 8
-			nn.Conv2d(4, 8, 3, stride=2, padding=0),
+			nn.Conv2d(3, 8, 3, stride=2, padding=0),
 			nn.BatchNorm2d(8),
 			nn.ReLU(True),
 
