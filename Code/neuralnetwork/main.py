@@ -62,6 +62,6 @@ fit(
 )
 
 directory = os.path.dirname(__file__)
-file_path = os.path.join(directory, "model/rgb_triplet_patch_encoder_model_euclidean_2.pt")
+file_path = os.path.join(directory, "model/rgb_triplet_patch_encoder_model_euclidean_neg_outside_SIFT_circle.pt")
 torch.save(model.encoder, file_path)
 print("---###@@@$$$!!!! MODEL SAVED !!!$$$$@@@###---")

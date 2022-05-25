@@ -25,7 +25,11 @@ class Frame(ProjectObject):
 	    color_path: str,
 		depth_path: str,
 		pose_path: str,
-		img_index: int
+		img_index: int,
+		fx: float = 522.259,
+		fy: float = 523.419,
+		Cx: float = 330.18,
+		Cy: float = 254.437
 	):
 		super().__init__()
 		self.color_path = color_path
@@ -43,11 +47,11 @@ class Frame(ProjectObject):
 		self.f_matrix = None
 		self.R, self.t = None, None
 
-		# Kinect v1 intrinsic parameters
-		self.fx = 522.259  # 514.120
-		self.fy = 523.419  # 513.841
-		self.Cx = 330.18  # 310.744
-		self.Cy = 254.437  # 262.611
+		# Kinect v1 intrinsic parameters are the default of the method
+		self.fx = fx  # 514.120
+		self.fy = fy  # 513.841
+		self.Cx = Cx  # 310.744
+		self.Cy = Cy  # 262.611
 
 	def extract_pose(self) -> np.ndarray:
 		"""Get the pose of the image from the paths.
@@ -202,3 +206,11 @@ class Frame(ProjectObject):
 		return np.mat([[self.fx, 0, self.Cx],
 		               [0, self.fy, self.Cy],
 		               [0, 0, 1]])
+
+	def get_width(self):
+		image = np.asarray(self.get_o3d_images(ret="rgb"))
+		return image.shape[1]
+	
+	def get_height(self):
+		image = np.asarray(self.get_o3d_images(ret="rgb"))
+		return image.shape[0]

@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
+from PIL import Image
 from scipy import spatial
 from torch import Tensor
 from torch.autograd import Variable
@@ -213,9 +214,14 @@ def __get_patch(patch_key_point,
 			yo = int(max(0, min(yc - patch_side,
 								h - 1 - 2 * patch_side)) + y_off)
 			
-			patch[0, y_off, x_off] = color_img[yo, xo, 0]
-			patch[1, y_off, x_off] = color_img[yo, xo, 1]
-			patch[2, y_off, x_off] = color_img[yo, xo, 2]
+			if len(color_img.shape) == 3:
+				patch[0, y_off, x_off] = color_img[yo, xo, 0]
+				patch[1, y_off, x_off] = color_img[yo, xo, 1]
+				patch[2, y_off, x_off] = color_img[yo, xo, 2]
+			else:
+				patch[0, y_off, x_off] = color_img[yo, xo]
+				patch[1, y_off, x_off] = color_img[yo, xo]
+				patch[2, y_off, x_off] = color_img[yo, xo]
 			
 			if method == "rgbd":
 				patch[3, y_off, x_off] = depth_img[yo, xo]

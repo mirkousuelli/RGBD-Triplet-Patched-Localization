@@ -1,5 +1,6 @@
 import json
 import linecache
+import math
 import os
 from os.path import exists
 from typing import Tuple, Union
@@ -10,7 +11,9 @@ from scipy.spatial.transform import Rotation
 
 from camera.Action import Action
 from camera.Frame import Frame
-from pipeline_utils import get_match_probabilities
+from pipeline_utils import get_match_probabilities, get_features_from_merged, \
+	get_key_points_from_features, get_semantic_patches, get_latent_vectors, \
+	get_semantic_scores, compute_probabilities
 from tools.Merger import Merger
 from tools.SemanticSampling import SemanticSampling
 from utils.utils import get_rgb_triplet_dataset_path, \
@@ -84,6 +87,9 @@ class MeanAverageAccuracy(object):
 		self.dataset = dataset
 		self.method = method
 		
+		self.dnn_fails = 0
+		self.cv_fails = 0
+		
 	def compute_metric(self, verbose: bool = True) -> Tuple[float, float]:
 		"""Computes the mean average accuracy of classical ransac and DNN ransac.
 		
@@ -107,52 +113,69 @@ class MeanAverageAccuracy(object):
 			if verbose:
 				print("Analysing images %s and %s" % (img1, img2))
 			
+			total += 1
 			frame1, frame2 = self._get_frames(img1, img2)
 			action = Action(frame1, frame2)
 			dnn_f, dnn_mask, cv_f, cv_mask = self.__get_dnn_cv_matrices(action)
 			
-			# Compute roto-translation of dnn
-			action.set_fundamental_matrix(dnn_f, dnn_mask)
-			action.compute_essential_matrix()
-			action.roto_translation()
-			dnn_R, dnn_t = action.R, action.t
-			
-			# Compute roto-translation of classical computer vision
-			action.set_fundamental_matrix(cv_f, cv_mask)
-			action.compute_essential_matrix()
-			action.roto_translation()
-			cv_R, cv_t = action.R, action.t
-			
 			# Compute ground truth roto-translation
 			truth_R, truth_t = self._get_ground_truth(action)
 			
-			# Compute angle between estimations and ground truth
-			dnn_unit_t = dnn_t / np.linalg.norm(dnn_t)
-			cv_unit_t = cv_t / np.linalg.norm(cv_t)
-			truth_unit_t = truth_t / np.linalg.norm(truth_t)
-			dnn_t_angle = np.arccos(np.dot(dnn_unit_t, truth_unit_t))
-			cv_t_angle = np.arccos(np.dot(cv_unit_t, truth_unit_t))
+			# Compute roto-translation of dnn
+			action.set_fundamental_matrix(dnn_f, dnn_mask)
+			if dnn_f is not None:
+				action.compute_essential_matrix()
+				action.roto_translation()
+				dnn_R, dnn_t = action.R, action.t
+				
+				# Compute angle between estimations and ground truth
+				dnn_unit_t = dnn_t / np.linalg.norm(dnn_t)
+				truth_unit_t = truth_t / np.linalg.norm(truth_t)
+				dnn_t_angle = np.arccos(np.dot(dnn_unit_t, truth_unit_t))
 			
-			# Compute angles of the rotation matrix
-			dnn_rot_angles = Rotation.from_matrix(dnn_R).as_euler('xyz', degrees=True)
-			cv_rot_angles = Rotation.from_matrix(cv_R).as_euler('xyz', degrees=True)
-			truth_rot_angles = Rotation.from_matrix(truth_R).as_euler('xyz', degrees=True)
-			dnn_R_angles = np.abs(np.array(truth_rot_angles) - np.array(dnn_rot_angles))
-			cv_R_angles = np.abs(np.array(truth_rot_angles) - np.array(cv_rot_angles))
+				# Compute angles of the rotation matrix
+				dnn_rot_angles = Rotation.from_matrix(dnn_R).as_euler('xyz', degrees=True)
+				truth_rot_angles = Rotation.from_matrix(truth_R).as_euler('xyz', degrees=True)
+				dnn_R_angles = np.abs(np.array(truth_rot_angles) - np.array(dnn_rot_angles))
+				
+				# I check that every angle is less than the threshold. If so, the
+				# transformation is considered correct
+				if (dnn_t_angle < self.threshold and
+						dnn_R_angles[0] < self.threshold and
+						dnn_R_angles[1] < self.threshold and
+						dnn_R_angles[2] < self.threshold):
+					dnn_correct += 1
+			else:
+				print("WARNING: DNN Fundamental matrix not found")
+				self.dnn_fails += 1
 			
-			# I check that every angle is less than the threshold. If so, the
-			# transformation is considered correct
-			total += 1
-			if (dnn_t_angle < self.threshold and
-					dnn_R_angles[0] < self.threshold and
-					dnn_R_angles[1] < self.threshold and
-					dnn_R_angles[2] < self.threshold):
-				dnn_correct += 1
-			elif (cv_t_angle < self.threshold and
-				  cv_R_angles[0] < self.threshold and
-				  cv_R_angles[1] < self.threshold and
-				  cv_R_angles[2] < self.threshold):
-				cv_correct += 1
+			# Compute roto-translation of classical computer vision
+			action.set_fundamental_matrix(cv_f, cv_mask)
+			if cv_f is not None:
+				action.compute_essential_matrix()
+				action.roto_translation()
+				cv_R, cv_t = action.R, action.t
+				
+				# Compute angle between estimations and ground truth
+				cv_unit_t = cv_t / np.linalg.norm(cv_t)
+				truth_unit_t = truth_t / np.linalg.norm(truth_t)
+				cv_t_angle = np.arccos(np.dot(cv_unit_t, truth_unit_t))
+			
+				# Compute angles of the rotation matrix
+				cv_rot_angles = Rotation.from_matrix(cv_R).as_euler('xyz', degrees=True)
+				truth_rot_angles = Rotation.from_matrix(truth_R).as_euler('xyz', degrees=True)
+				cv_R_angles = np.abs(np.array(truth_rot_angles) - np.array(cv_rot_angles))
+				
+				# I check that every angle is less than the threshold. If so, the
+				# transformation is considered correct
+				if (cv_t_angle < self.threshold and
+					  cv_R_angles[0] < self.threshold and
+					  cv_R_angles[1] < self.threshold and
+					  cv_R_angles[2] < self.threshold):
+					cv_correct += 1
+			else:
+				print("WARNING: Classical Fundamental matrix not found")
+				self.cv_fails += 1
 		
 		return dnn_correct / total, cv_correct / total
 	
@@ -212,34 +235,48 @@ class MeanAverageAccuracy(object):
 			img1 = action.first.index
 			img2 = action.second.index
 			
-			img1_f_k1_k2 = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 3)
-			img1_row1_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 1 + 3)
-			img1_row2_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 2 + 3)
-			img1_row3_R = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 3 + 3)
-			img1_translation = linecache.getline("../Dataset/NotreDame/list.txt", img1 + 4 + 3)
+			img1_f_k1_k2 = linecache.getline("../Dataset/NotreDame/notredame.out", img1 + 3)
+			img1_row1_R = linecache.getline("../Dataset/NotreDame/notredame.out", img1 + 1 + 3)
+			img1_row2_R = linecache.getline("../Dataset/NotreDame/notredame.out", img1 + 2 + 3)
+			img1_row3_R = linecache.getline("../Dataset/NotreDame/notredame.out", img1 + 3 + 3)
+			img1_translation = linecache.getline("../Dataset/NotreDame/notredame.out", img1 + 4 + 3)
 			
-			img2_f_k1_k2 = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 3)
-			img2_row1_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 1 + 3)
-			img2_row2_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 2 + 3)
-			img2_row3_R = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 3 + 3)
-			img2_translation = linecache.getline("../Dataset/NotreDame/list.txt", img2 + 4 + 3)
+			img2_f_k1_k2 = linecache.getline("../Dataset/NotreDame/notredame.out", img2 + 3)
+			img2_row1_R = linecache.getline("../Dataset/NotreDame/notredame.out", img2 + 1 + 3)
+			img2_row2_R = linecache.getline("../Dataset/NotreDame/notredame.out", img2 + 2 + 3)
+			img2_row3_R = linecache.getline("../Dataset/NotreDame/notredame.out", img2 + 3 + 3)
+			img2_translation = linecache.getline("../Dataset/NotreDame/notredame.out", img2 + 4 + 3)
 			
-			img1_row1_R = img1_row1_R.split(" ")[:-1]
+			img1_f_k1_k2 = img1_f_k1_k2.split(" ")
+			img1_f_k1_k2 = np.array(img1_f_k1_k2, dtype=float)
+			f, k1, k2 = img1_f_k1_k2[0], img1_f_k1_k2[1], img1_f_k1_k2[2]
+			action.first.fx, action.first.fy = f, f
+			action.first.Cx = action.first.get_width() / 2
+			action.first.Cy = action.first.get_height() / 2
+			
+			img2_f_k1_k2 = img2_f_k1_k2.split(" ")
+			img2_f_k1_k2 = np.array(img2_f_k1_k2, dtype=float)
+			f, k1, k2 = img2_f_k1_k2[0], img2_f_k1_k2[1], img2_f_k1_k2[2]
+			action.second.fx, action.second.fy = f, f
+			action.second.Cx = action.second.get_width() / 2
+			action.second.Cy = action.second.get_height() / 2
+			
+			img1_row1_R = img1_row1_R.split(" ")
 			img1_row1_R = np.array(img1_row1_R, dtype=float)
-			img1_row2_R = img1_row2_R.split(" ")[:-1]
+			img1_row2_R = img1_row2_R.split(" ")
 			img1_row2_R = np.array(img1_row2_R, dtype=float)
-			img1_row3_R = img1_row3_R.split(" ")[:-1]
+			img1_row3_R = img1_row3_R.split(" ")
 			img1_row3_R = np.array(img1_row3_R, dtype=float)
-			img1_translation = img1_translation.split(" ")[:-1]
+			img1_translation = img1_translation.split(" ")
 			img1_translation = np.array(img1_translation, dtype=float)
 			
-			img2_row1_R = img2_row1_R.split(" ")[:-1]
+			img2_row1_R = img2_row1_R.split(" ")
 			img2_row1_R = np.array(img2_row1_R, dtype=float)
-			img2_row2_R = img2_row2_R.split(" ")[:-1]
+			img2_row2_R = img2_row2_R.split(" ")
 			img2_row2_R = np.array(img2_row2_R, dtype=float)
-			img2_row3_R = img2_row3_R.split(" ")[:-1]
+			img2_row3_R = img2_row3_R.split(" ")
 			img2_row3_R = np.array(img2_row3_R, dtype=float)
-			img2_translation = img2_translation.split(" ")[:-1]
+			img2_translation = img2_translation.split(" ")
 			img2_translation = np.array(img2_translation, dtype=float)
 			
 			# here images are from 0 to i
@@ -282,7 +319,9 @@ class MeanAverageAccuracy(object):
 						  "ransac_iterations": self.ransac_iterations,
 						  "patch_side": self.patch_side,
 						  "dnn_maa": dnn_mAA,
-						  "cv_maa": cv_mAA}
+						  "cv_maa": cv_mAA,
+						  "dnn_fails": self.dnn_fails,
+						  "cv_fails": self.cv_fails}
 		json_string = json.JSONEncoder().encode(accuracy_setup)
 		
 		with open(file_path, mode="w") as file_:
@@ -339,19 +378,35 @@ class MeanAverageAccuracy(object):
 			matcher_method=self.match_method
 		)
 		merge_image = merger.merge_action(action, return_draw=False)
-		probs = get_match_probabilities(action,
-										self.network_path,
-										self.patch_side,
-										method=self.method)
-		semantic_ransac = SemanticSampling()
-		dnn_best_f, dnn_best_mask = semantic_ransac.ransac_fundamental_matrix(
-			action,
-			iterations=self.ransac_iterations,
-			semantic=probs
-		)
-		cv_best_f, cv_best_mask = semantic_ransac.ransac_fundamental_matrix(
-			action,
-			iterations=self.ransac_iterations
-		)
+		
+		features_1, features_2 = get_features_from_merged(action)
+		first_key_points, second_key_points = get_key_points_from_features(features_1, features_2)
+		first_patches, second_patches = get_semantic_patches(action, first_key_points, second_key_points, self.patch_side, self.method)
+		
+		if first_patches.shape[0] != 0:
+			first_latent_vectors, second_latent_vectors = get_latent_vectors(self.network_path, first_patches, second_patches)
+			semantic_scores = get_semantic_scores(first_latent_vectors, second_latent_vectors)
+			probs = compute_probabilities(semantic_scores)
+			
+			# Eliminate NaN value and re-normalize the values if necessary
+			for i in range(probs.shape[0]):
+				if probs[i] == np.nan or math.isnan(probs[i]):
+					probs[i] = 0.0
+			if np.sum(probs) == 0:
+				probs[0] = 1.0
+			
+			semantic_ransac = SemanticSampling()
+			dnn_best_f, dnn_best_mask = semantic_ransac.ransac_fundamental_matrix(
+				action,
+				iterations=self.ransac_iterations,
+				semantic=probs
+			)
+			cv_best_f, cv_best_mask = semantic_ransac.ransac_fundamental_matrix(
+				action,
+				iterations=self.ransac_iterations
+			)
+		else:
+			dnn_best_f, dnn_best_mask, cv_best_f, cv_best_mask = None, None, None, None
+			
 		return dnn_best_f, dnn_best_mask, cv_best_f, cv_best_mask
 

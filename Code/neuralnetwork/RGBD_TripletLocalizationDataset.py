@@ -326,21 +326,37 @@ class RGBD_TripletLocalizationDataset(Dataset):
 			         for key2 in second_keys]
 			x1Fx2 = np.absolute(x1Fx2)
 			pos_idx = np.argmin(x1Fx2)
-			neg_idx = np.argmax(x1Fx2)
-			"""has_found_good_neg = False
+			has_found_good_neg = False
 			
+			# Random pick one without replacement. Each time an element is
+			# extracted and is invalid, it is removed from the population. For
+			# this reason we use an array of indices of x1Fx2.
+			points_to_choose = np.arange(x1Fx2.shape[0])
 			while not has_found_good_neg:
-				# Generate random negative
-				neg_idx = rng.integers(low=0, high=x1Fx2.shape[0] - 1)
-				
-				# Compute distance between pos and neg
-				pos_point = np.asarray(second_keys[pos_idx])
-				neg_point = np.asarray(second_keys[neg_idx])
-				dist = np.linalg.norm(pos_point - neg_point)
-				
-				# Check that neg is not in the circle of pos descriptor
-				if dist > action.second.key_points[pos_idx].size / 2:
-					has_found_good_neg = True"""
+				if points_to_choose.size == 0:
+					# All points are inside the circle of SIFT of the positive
+					# example. Therefore, we use argmax.
+					neg_idx = np.argmax(x1Fx2)
+					has_found_good_neg = True
+					
+					print("******************************************************")
+					print("* WARNING: all points are inside the circle of SIFT. *")
+					print("******************************************************")
+				else:
+					# Generate random negative
+					neg_idx = rng.choice(points_to_choose, 1)[0]
+					
+					# Compute distance between pos and neg
+					pos_point = np.asarray(second_keys[pos_idx])
+					neg_point = np.asarray(second_keys[neg_idx])
+					dist = np.linalg.norm(pos_point - neg_point)
+					
+					# Check that neg is not in the circle of pos descriptor
+					if dist > action.second.key_points[pos_idx].size / 2:
+						has_found_good_neg = True
+					else:
+						elem_idx = points_to_choose.tolist().index(neg_idx)
+						points_to_choose = np.delete(points_to_choose, elem_idx, 0)
 
 			# I add the triplet anchor-positive-negative to the triplets list
 			triplets.append(
