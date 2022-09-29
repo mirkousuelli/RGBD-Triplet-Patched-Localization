@@ -19,6 +19,6 @@ While the standard Localization approach straightforwardly takes place by applyi
 
 ![](Images/normal.png)
 
-- With our proposed approach DNN-based: 
+- With our DNN-based proposed approach: 
 
 ![](Images/dnn.png)
